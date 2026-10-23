@@ -8,7 +8,7 @@ understand the impact and start the resolution. Every CI name links to its Jira 
 resolution (future) → footer.
 
 **Choosing a template:** Keep picks it from the **object type of the root CI**, after the Assets
-lookup by `ci_name` and the precedence rules in [jira-assets/README.md](jira-assets/README.md):
+lookup by `ci_name` via the enrichment service in [observability-cmdb](https://github.com/diegodss/observability-cmdb):
 - Application → [template](#application-template-template) · [filled example](#application-template-filled-example);
 - Integration → [template](#integration-template-template) · [filled example](#integration-template-filled-example);
 - Connector (optional layer) → [filled example](#connector-template-filled-example).
