@@ -32,22 +32,17 @@ git clone https://github.com/diegodss/observability-env-simulator.git
 git clone https://github.com/diegodss/observability-platform.git
 ```
 
-**1. Start the simulator first.** It creates the shared Docker network `observability-sim`:
+Start both, in either order:
 
 ```bash
-cd observability-env-simulator
-docker compose up --build -d
+cd observability-env-simulator && docker compose up --build -d
+cd ../observability-platform && docker compose up -d
 ```
 
-**2. Start the platform:**
-
-```bash
-cd ../observability-platform
-docker compose up -d
-```
-
-If the platform says *network observability-sim declared as external, but could not be found*,
-the simulator isn't running yet; do step 1 first.
+Both repos declare the same Docker network, `observability-sim`, which is how Prometheus reaches
+the simulator's services by name. Whichever stack starts second logs a harmless warning that the
+network "was not created for project …"; that's expected. Until the simulator is up, its targets
+show as DOWN.
 
 | UI | URL |
 |---|---|
@@ -56,8 +51,8 @@ the simulator isn't running yet; do step 1 first.
 | Prometheus alerts | http://localhost:9090/alerts |
 
 **Stop** with `docker compose down`, or `down -v` to also drop Prometheus history. The two repos
-start and stop independently. Stop the platform before running `down` in the simulator, because the
-simulator owns the shared network and can't remove it while the platform is still attached.
+start and stop independently, in any order. The shared network is removed when the last stack using
+it goes down.
 
 ## See it work
 
@@ -85,7 +80,7 @@ update) are in the simulator's README.
 ## Repository layout
 
 ```
-compose.yaml                   Prometheus + Grafana, joined to the simulator's network
+compose.yaml                   Prometheus + Grafana, on the network shared with the simulator
 prometheus/prometheus.yml      scrape jobs, with ci_name / display_name labels
 prometheus/rules.yml           alert rules
 grafana/provisioning/          datasource and dashboard provider

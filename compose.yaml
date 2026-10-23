@@ -1,8 +1,8 @@
 name: observability-platform
 
 # Monitoring, alerting and (later) correlation for the observability-env-simulator.
-# Start the simulator first: it creates the shared `observability-sim` network that
-# this stack joins, so Prometheus can scrape its services by name (edw:8000, ...).
+# Prometheus scrapes the simulator's services by name (edw:8000, ...) over the
+# shared `observability-sim` network.
 
 services:
   prometheus:
@@ -37,10 +37,12 @@ services:
     ports:
       - "127.0.0.1:${GRAFANA_HOST_PORT:-3000}:3000"
 
+# Shared network: both repos declare the same named network, so either stack can
+# start or stop first. Whichever starts second logs a harmless warning that the
+# network "was not created for project ...": that is expected.
 networks:
   default:
     name: observability-sim
-    external: true
 
 volumes:
   prometheus-data:
