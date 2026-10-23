@@ -9,18 +9,18 @@ resolution (future) → footer.
 
 **Choosing a template:** Keep picks it from the **object type of the root CI**, after the Assets
 lookup by `ci_name` and the precedence rules in [jira-assets/README.md](jira-assets/README.md):
-- Application → [template 1](#1-application-system-template);
-- Integration → [template 2](#2-integration-template);
-- Connector (optional layer) → [template 3](#3-connector-template).
+- Application → [template](#application-template-template) · [filled example](#application-template-Filled-example);
+- Integration → [template](#integration-template-template) · [filled example](#integration-template-Filled-example);
+- Connector (optional layer) → [filled example](#connector-template-Filled-example).
 
 Placeholders are written `{like this}` and are filled in by Keep.
 
-## 1. Application (system) template
+## Application template
 
 Used when the root CI is an **Application**: a system is down, and the integrations reading from or
 writing to it are just affected.
 
-### Template
+### Application template: template
 
 **🔴 {Application} unavailable · {N failing} integrations failing · {Priority} · since {start time}**
 
@@ -54,7 +54,9 @@ writing to it are just affected.
 | State, last success, N failing | Prometheus / alerts |
 | Priority, confidence, evidence | Keep rules |
 
-### Filled example
+<a id="application-template-Filled-example"></a>
+
+### Application template: filled example
 
 **🔴 EDW unavailable · 3 integrations failing · P2 · since 15:57**
 
@@ -82,12 +84,12 @@ writing to it are just affected.
 *Informed: Current Students*
 *Enriched from Jira Assets: 5 CIs matched (1 application, 4 integrations) · resolver, impact, source → target from Assets*
 
-## 2. Integration template
+## Integration template
 
 Used when the root CI is the **Integration** itself: its target, source and connectors are
 healthy, and nothing correlates.
 
-### Template
+### Integration template: template
 
 **🟠 Integration failing: {short integration name} · {Priority} · since {start time}**
 
@@ -117,7 +119,9 @@ healthy, and nothing correlates.
 | N runs, error_type, error message, last success | Prometheus / alert labels |
 | Priority, confidence, evidence | Keep rules |
 
-### Filled example
+<a id="integration-template-Filled-example"></a>
+
+### Integration template: filled example
 
 **🟠 Integration failing: AppEvents from SMS to EDW - Student · P3 · since 15:57**
 
@@ -140,12 +144,14 @@ healthy, and nothing correlates.
 
 *Enriched from Jira Assets: 1 CI matched (integration) · resolver, domain, flow, schedule, platform, connectors from Assets*
 
-## 3. Connector template
+## Connector template
 
 Only when the integrations involved have **Connector CIs** (the optional layer), the connector's
 heartbeat is failing, and the application it connects to is healthy.
 
-### Filled example
+<a id="connector-template-Filled-example"></a>
+
+### Connector template: filled example
 
 **🔴 Connector failing: CONN - Data Warehouse (EDW) DB · 3 integrations failing · P2 · since 15:57**
 
@@ -173,6 +179,19 @@ heartbeat is failing, and the application it connects to is healthy.
 
 *Informed: Current Students, Data Squad*
 *Enriched from Jira Assets: 5 CIs matched (1 connector, 4 integrations) · resolver, impact, connects-to from Assets*
+
+## Direct links
+
+| Section | Link |
+|---|---|
+| Application template | [`#application-template-template`](#application-template-template) |
+| Application filled example | [`#application-template-Filled-example`](#application-template-Filled-example) |
+| Integration template | [`#integration-template-template`](#integration-template-template) |
+| Integration filled example | [`#integration-template-Filled-example`](#integration-template-Filled-example) |
+| Connector filled example | [`#connector-template-Filled-example`](#connector-template-Filled-example) |
+
+The lowercase forms GitHub generates from the headings (e.g. `#application-template-filled-example`)
+work too.
 
 ## Rules for all templates
 
