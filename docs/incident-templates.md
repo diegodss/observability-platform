@@ -9,9 +9,9 @@ resolution (future) → footer.
 
 **Choosing a template:** Keep picks it from the **object type of the root CI**, after the Assets
 lookup by `ci_name` and the precedence rules in [jira-assets/README.md](jira-assets/README.md):
-- Application → [template](#application-template-template) · [filled example](#application-template-Filled-example);
-- Integration → [template](#integration-template-template) · [filled example](#integration-template-Filled-example);
-- Connector (optional layer) → [filled example](#connector-template-Filled-example).
+- Application → [template](#application-template-template) · [filled example](#application-template-filled-example);
+- Integration → [template](#integration-template-template) · [filled example](#integration-template-filled-example);
+- Connector (optional layer) → [filled example](#connector-template-filled-example).
 
 Placeholders are written `{like this}` and are filled in by Keep.
 
@@ -53,8 +53,6 @@ writing to it are just affected.
 | Affected integrations, N affected, Source System, Domain / Subdomain | Assets: integrations with `Target System` = {Application} (unmonitored ones included) |
 | State, last success, N failing | Prometheus / alerts |
 | Priority, confidence, evidence | Keep rules |
-
-<a name="application-template-Filled-example"></a>
 
 ### Application template: filled example
 
@@ -119,8 +117,6 @@ healthy, and nothing correlates.
 | N runs, error_type, error message, last success | Prometheus / alert labels |
 | Priority, confidence, evidence | Keep rules |
 
-<a name="integration-template-Filled-example"></a>
-
 ### Integration template: filled example
 
 **🟠 Integration failing: AppEvents from SMS to EDW - Student · P3 · since 15:57**
@@ -148,8 +144,6 @@ healthy, and nothing correlates.
 
 Only when the integrations involved have **Connector CIs** (the optional layer), the connector's
 heartbeat is failing, and the application it connects to is healthy.
-
-<a name="connector-template-Filled-example"></a>
 
 ### Connector template: filled example
 
@@ -185,13 +179,13 @@ heartbeat is failing, and the application it connects to is healthy.
 | Section | Link |
 |---|---|
 | Application template | [`#application-template-template`](#application-template-template) |
-| Application filled example | [`#application-template-Filled-example`](#application-template-Filled-example) |
+| Application filled example | [`#application-template-filled-example`](#application-template-filled-example) |
 | Integration template | [`#integration-template-template`](#integration-template-template) |
-| Integration filled example | [`#integration-template-Filled-example`](#integration-template-Filled-example) |
-| Connector filled example | [`#connector-template-Filled-example`](#connector-template-Filled-example) |
+| Integration filled example | [`#integration-template-filled-example`](#integration-template-filled-example) |
+| Connector filled example | [`#connector-template-filled-example`](#connector-template-filled-example) |
 
-The lowercase forms GitHub generates from the headings (e.g. `#application-template-filled-example`)
-work too.
+GitHub generates these anchors from the headings and always lowercases them, so use the lowercase
+form in links (`#application-template-filled-example`, not `…-Filled-example`).
 
 ## Rules for all templates
 
