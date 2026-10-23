@@ -189,6 +189,11 @@ form in links (`#application-template-filled-example`, not `…-Filled-example`)
 
 ## Rules for all templates
 
+- **Where the ticket goes:** an ordinary Jira issue in `routing.project`, with `routing.labels`
+  (e.g. `resolver-data-squad`), both from the CMDB API response. The **Resolver** line shows
+  `routing.resolver_group`. Today every ticket goes to one project with a label; later a project per
+  squad. See `data/routing.yaml` in observability-cmdb.
+
 - **Links:** every CI name is a link to its Assets object.
 - **Status rows:** show *Status* only when it isn't Production (e.g. "Production - To Retire").
 - **Failed lookups:** if the Assets lookup fails, the footer says so ("CI 'X' not found in Assets;

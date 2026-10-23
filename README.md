@@ -105,8 +105,13 @@ Authorization: Bearer <CMDB_API_KEY>
 
 The API requires the key set in the cmdb service's `CMDB_API_KEY`. Store it in Keep as a secret.
 
-It returns the root CI, its **Resolver Group**, the informed groups and the impact (affected
-integrations and domains). See:
+It returns the root CI, its **Resolver Group**, the informed groups, the impact (affected
+integrations and domains) and **`routing`**, the Jira project and labels for the ticket.
+
+**Tickets are ordinary Jira issues** (no Jira Service Management). For now every incident goes to
+one project, labelled per resolver group (e.g. `resolver-data-squad`). When squads get their own
+projects, observability-cmdb's `data/routing.yaml` switches them over with no change here: Keep
+always creates the issue in `routing.project` with `routing.labels`. See:
 - [docs/alerting.md](docs/alerting.md): scrape jobs and alert rules;
 - [docs/incident-templates.md](docs/incident-templates.md): the ticket layouts, filled from that response.
 
