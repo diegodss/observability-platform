@@ -100,7 +100,10 @@ The CMDB side lives in [observability-cmdb](https://github.com/diegodss/observab
 
 ```
 GET http://cmdb:8080/ci/{ci_name}?failed_side=target
+Authorization: Bearer <CMDB_API_KEY>
 ```
+
+The API requires the key set in the cmdb service's `CMDB_API_KEY`. Store it in Keep as a secret.
 
 It returns the root CI, its **Resolver Group**, the informed groups and the impact (affected
 integrations and domains). See:
