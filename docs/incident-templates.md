@@ -54,7 +54,7 @@ writing to it are just affected.
 | State, last success, N failing | Prometheus / alerts |
 | Priority, confidence, evidence | Keep rules |
 
-<a id="application-template-Filled-example"></a>
+<a name="application-template-Filled-example"></a>
 
 ### Application template: filled example
 
@@ -119,7 +119,7 @@ healthy, and nothing correlates.
 | N runs, error_type, error message, last success | Prometheus / alert labels |
 | Priority, confidence, evidence | Keep rules |
 
-<a id="integration-template-Filled-example"></a>
+<a name="integration-template-Filled-example"></a>
 
 ### Integration template: filled example
 
@@ -149,7 +149,7 @@ healthy, and nothing correlates.
 Only when the integrations involved have **Connector CIs** (the optional layer), the connector's
 heartbeat is failing, and the application it connects to is healthy.
 
-<a id="connector-template-Filled-example"></a>
+<a name="connector-template-Filled-example"></a>
 
 ### Connector template: filled example
 
