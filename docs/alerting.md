@@ -40,4 +40,4 @@ together with three `IntegrationLastRunFailed`. A correlator groups them in two 
 1. look up each alert's `ci_name` in Jira Assets;
 2. follow each integration's **Target System** to EDW, the shared root CI.
 
-The lookup is done by the enrichment service in [observability-cmdb](https://github.com/diegodss/observability-cmdb) (`GET http://enricher:8080/ci/{ci_name}`). The ticket layouts are in [incident-templates.md](incident-templates.md).
+The lookup is done by the CMDB API in [observability-cmdb](https://github.com/diegodss/observability-cmdb) (`GET http://cmdb:8080/ci/{ci_name}`). The ticket layouts are in [incident-templates.md](incident-templates.md).

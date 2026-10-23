@@ -6,7 +6,7 @@ plays "production": Technology One (SM), EDW and three AppEvents integrations. T
 and it's where the alerting pipeline is built:
 
 ```
-simulator services ──▶ Prometheus ──▶ alert rules ──▶ [Alertmanager / Keep] ──▶ CMDB enricher ──▶ Jira ticket
+simulator services ──▶ Prometheus ──▶ alert rules ──▶ [Alertmanager / Keep] ──▶ CMDB API ──▶ Jira ticket
                           │                              (next)                  (observability-cmdb)  (templates ready)
                           └──▶ Grafana dashboard
 ```
@@ -16,9 +16,9 @@ simulator services ──▶ Prometheus ──▶ alert rules ──▶ [Alertma
 | Prometheus scraping the 5 simulator services, with `ci_name` labels | ✅ running |
 | Alert rules (target/source down, integration failed, stale) | ✅ evaluated, shown at `/alerts` |
 | Grafana dashboard (health, timeline, runs, failures, data) | ✅ provisioned |
-| Jira Assets schemas and enrichment service | ✅ in [observability-cmdb](https://github.com/diegodss/observability-cmdb) (`GET /ci/{ci_name}`) |
+| Jira Assets schemas and CMDB API | ✅ in [observability-cmdb](https://github.com/diegodss/observability-cmdb) (`GET /ci/{ci_name}`) |
 | Incident ticket templates (application, integration, connector) | ✅ designed |
-| Alertmanager / Keep calling the enricher, Jira ticket creation | ⏳ next |
+| Alertmanager / Keep calling the CMDB API, Jira ticket creation | ⏳ next |
 
 > **Not production-hardened.** Local development setup: default Grafana credentials, anonymous
 > viewing, ports bound to `127.0.0.1`.
@@ -96,10 +96,10 @@ Every scraped series carries `ci_name`, the exact name of the CI in Jira Assets:
 - the integrations are the full `ETL - DXMULTI-0001 : AppEvents from SMS to EDW …` names.
 
 The CMDB side lives in [observability-cmdb](https://github.com/diegodss/observability-cmdb): the three Jira Assets schemas as code
-(plan/apply), and an enrichment service on the shared network. Keep calls it with the alert's label:
+(plan/apply), and the CMDB API on the shared network. Keep calls it with the alert's label:
 
 ```
-GET http://enricher:8080/ci/{ci_name}?failed_side=target
+GET http://cmdb:8080/ci/{ci_name}?failed_side=target
 ```
 
 It returns the root CI, its **Resolver Group**, the informed groups and the impact (affected
@@ -116,7 +116,7 @@ Defaults are in `compose.yaml`; override them in `.env` (see `.env.example`):
 ## Next steps
 
 1. **Alertmanager or Keep** as the receiver for the Prometheus alerts.
-2. **Enrichment:** call the observability-cmdb enricher with each alert's `ci_name`.
+2. **Enrichment:** call the observability-cmdb API with each alert's `ci_name`.
 3. **Correlation:** group alerts by root CI, with application → connector → integration precedence.
 4. **Ticketing:** create and update the Jira incident from the templates, and auto-resolve it when the
    alerts clear.
