@@ -52,7 +52,6 @@ services:
       - "0.0.0.0:${GRAFANA_HOST_PORT:-3001}:3000"
 
 # KeepHq
-
   db:
     image: postgres:15-alpine
     environment:
@@ -77,23 +76,19 @@ services:
       - DATABASE_CONNECTION_STRING=postgresql://keep:keep@db:5432/keep
       - SECRET_MANAGER_TYPE=FILE
       - SECRET_MANAGER_DIRECTORY=/secret
+      - KEEP_WORKFLOWS_DIRECTORY=/app/workflows
+      - KEEP_PROVIDERS_DIRECTORY=/app/providers      
       - AUTH_TYPE=NO_AUTH
+    # - KEEP_DEFAULT_USERNAME=admin
+    # - KEEP_DEFAULT_PASSWORD=admin      
       - KEEP_JWT_SECRET=keep-dev-secret-change-me
       - KEEP_STORE_DBTYPE=postgres
-    # - KEEP_DEFAULT_USERNAME=admin
-    # - KEEP_DEFAULT_PASSWORD=admin
       - KEEP_API_URL=http://backend:8080
-      - KEEP_WORKFLOWS_DIRECTORY=/app/workflows
-      - KEEP_PROVIDERS_DIRECTORY=/app/providers
       - KEEP_EXTERNAL_URL=http://192.168.0.254:3000      
     # Jira Envs
       - JIRA_API_TOKEN=xxxxxx
       - JIRA_EMAIL=anotaaideivid@gmail.com
       - JIRA_HOST=https://anotaaideivid.atlassian.net
-     
-
-
-
       
     volumes:
       - ./keep/keep-secrets:/secret
