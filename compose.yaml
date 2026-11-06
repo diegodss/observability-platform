@@ -80,16 +80,20 @@ services:
       - AUTH_TYPE=NO_AUTH
       - KEEP_JWT_SECRET=keep-dev-secret-change-me
       - KEEP_STORE_DBTYPE=postgres
+    # - KEEP_DEFAULT_USERNAME=admin
+    # - KEEP_DEFAULT_PASSWORD=admin
       - KEEP_API_URL=http://backend:8080
       - KEEP_WORKFLOWS_DIRECTORY=/app/workflows
       - KEEP_PROVIDERS_DIRECTORY=/app/providers
-      # Removi o token de proposito
-      - JIRA_API_TOKEN=ATATT3xFfGF04RPqsXMMhtCDRVducBmw9ZL0k0sMPbcgP6V71Jlm7UwA4GCP7GNweApuCVtERTxZgrjr5QLsJhTvQZ4IAatNUtuwUzrWFj0tln110oBNd1s9rRrNLdbIW7X-hQmNXTAKrZYUAgmHfgy4FI1Qt1mmmvDdI9lNEtFZva9_CUyjSV8=BD3747CE
+      - KEEP_EXTERNAL_URL=http://192.168.0.254:3000      
+    # Jira Envs
+      - JIRA_API_TOKEN=xxxxxx
+      - JIRA_EMAIL=anotaaideivid@gmail.com
+      - JIRA_HOST=https://anotaaideivid.atlassian.net
      
-     # - KEEP_DEFAULT_USERNAME=admin
-     # - KEEP_DEFAULT_PASSWORD=admin
 
-      - KEEP_EXTERNAL_URL=http://192.168.0.254:3000
+
+
       
     volumes:
       - ./keep/keep-secrets:/secret
