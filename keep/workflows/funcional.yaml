@@ -1,0 +1,237 @@
+workflow:
+  id: BKP2 grafana-edw-topology-routing-funcional
+  name: BKP2 Grafana -> EDW Root Cause Routing & Suppression
+  description: Supressão nativa de sintomas e abertura única de Causa Raiz para a topologia EDW e Technology One com auto-fechamento
+  disabled: true
+  triggers:
+    - type: alert
+      filters:
+        - key: labels.source
+          value: grafana
+  consts: {}
+  owners: []
+  services: []
+  steps: []
+  actions:
+    - name: cria-jira-raiz-edw-db
+      if: "'{{ alert.status }}' == 'firing' and '{{ alert.incident_closed }}' != 'false' and ('edw' in '{{ alert.labels.service }} {{ alert.labels.app }}'.lower() or 'edw' in '{{ alert.description }}'.lower()) and ('unreachable' in '{{ alert.description }}'.lower() or 'database' in '{{ alert.description }}'.lower() or 'db' in '{{ alert.description }}'.lower())"
+      provider:
+        type: jira
+        config: "{{ providers.jira_free }}"
+        with:
+          board_name: "OPS board"
+          issue_type: Task
+          summary: "EDW (Database Layer) unavailable"
+          description: "🔴 **EDW (Database Layer) unavailable · Root Cause Identified**
+
+
+            | Affected CI | Detalhe |
+
+            | --- | --- |
+
+            | **Affected CI** | EDW (Full Stack Affected) |
+
+            | **Resolver** | Data Squad |
+
+            | **Impact** | Downstream integration flow blocks are completely stopped. |
+
+            | **Logs** | [Grafana · Loki: failed runs in this window] |
+
+
+            | Trigger Event | State | Target System |
+
+            | --- | --- | --- |
+
+            | {{ alert.name }} | CRITICAL | EDW |\n"
+          enrich_alert:
+            - key: ticket_type
+              value: jira
+            - key: incident_closed
+              value: "false"
+            - key: ticket_id
+              value: results.issue.key
+            - key: ticket_url
+              value: results.ticket_url
+            - key: ticket_summary
+              value: "EDW (Database Layer) unavailable"
+    - name: cria-jira-raiz-edw-app
+      if: "'{{ alert.status }}' == 'firing' and '{{ alert.incident_closed }}' != 'false' and ('edw' in '{{ alert.labels.service }} {{ alert.labels.app }}'.lower() or 'edw' in '{{ alert.description }}'.lower()) and ('scraped' in '{{ alert.description }}'.lower() or 'cannot' in '{{ alert.description }}'.lower()) and 'integrationworker' not in '{{ alert.name }}'.lower()"
+      provider:
+        type: jira
+        config: "{{ providers.jira_free }}"
+        with:
+          board_name: "OPS board"
+          issue_type: Task
+          summary: "EDW (Application Layer) issue detected"
+          description: "🔴 **EDW (Application Layer) unavailable · Root Cause Identified**
+
+
+            | Affected CI | Detalhe |
+
+            # | --- | --- |
+
+            | **Affected CI** | EDW (Full Stack Affected) |
+
+            | **Resolver** | Data Squad |
+
+            | **Impact** | Downstream integration flow blocks are completely stopped. |
+
+            | **Logs** | [Grafana · Loki: failed runs in this window] |
+
+
+            | Trigger Event | State | Target System |
+
+            | --- | --- | --- |
+
+            | {{ alert.name }} | CRITICAL | EDW |\n"
+          enrich_alert:
+            - key: ticket_type
+              value: jira
+            - key: incident_closed
+              value: "false"
+            - key: ticket_id
+              value: results.issue.key
+            - key: ticket_url
+              value: results.ticket_url
+            - key: ticket_summary
+              value: "EDW (Application Layer) issue detected"
+    - name: cria-jira-raiz-techone-db
+      if: "'{{ alert.status }}' == 'firing' and '{{ alert.incident_closed }}' != 'false' and ('technology-one' in '{{ alert.name }} {{ alert.description }} {{ alert.labels.service }} {{ alert.labels.app }}'.lower() or 'technology one' in '{{ alert.name }} {{ alert.description }} {{ alert.labels.service }} {{ alert.labels.app }}'.lower()) and ('unreachable' in '{{ alert.description }}'.lower() or 'database' in '{{ alert.description }}'.lower() or 'db' in '{{ alert.description }}'.lower())"
+      provider:
+        type: jira
+        config: "{{ providers.jira_free }}"
+        with:
+          board_name: "OPS board"
+          issue_type: Task
+          summary: "technology-one-sm (Database Layer) unavailable"
+          description: "🔴 **technology-one-sm (Database Layer) unavailable · Root Cause Identified**
+
+
+            | Affected CI | Detalhe |
+
+            | --- | --- |
+
+            | **Affected CI** | technology-one-sm (Full Stack Affected) |
+
+            | **Resolver** | Data Squad |
+
+            | **Impact** | Downstream integration flow blocks are completely stopped. |
+
+            | **Logs** | [Grafana · Loki: failed runs in this window] |
+
+
+            | Trigger Event | State | Target System |
+
+            | --- | --- | --- |
+
+            | {{ alert.name }} | CRITICAL | technology-one-sm |\n"
+          enrich_alert:
+            - key: ticket_type
+              value: jira
+            - key: incident_closed
+              value: "false"
+            - key: ticket_id
+              value: results.issue.key
+            - key: ticket_url
+              value: results.ticket_url
+            - key: ticket_summary
+              value: "technology-one-sm (Database Layer) unavailable"
+    - name: cria-jira-raiz-techone-app
+      if: "'{{ alert.status }}' == 'firing' and '{{ alert.incident_closed }}' != 'false' and ('technology-one' in '{{ alert.name }} {{ alert.description }} {{ alert.labels.service }} {{ alert.labels.app }}'.lower() or 'technology one' in '{{ alert.name }} {{ alert.description }} {{ alert.labels.service }} {{ alert.labels.app }}'.lower()) and ('scraped' in '{{ alert.description }}'.lower() or 'cannot' in '{{ alert.description }}'.lower())"
+      provider:
+        type: jira
+        config: "{{ providers.jira_free }}"
+        with:
+          board_name: "OPS board"
+          issue_type: Task
+          summary: "technology-one-sm (Application Layer) issue detected"
+          description: "🔴 **technology-one-sm (Application Layer) unavailable · Root Cause Identified**
+
+
+            | Affected CI | Detalhe |
+
+            | --- | --- |
+
+            | **Affected CI** | technology-one-sm (Full Stack Affected) |
+
+            | **Resolver** | Data Squad |
+
+            | **Impact** | Downstream integration flow blocks are completely stopped. |
+
+            | **Logs** | [Grafana · Loki: failed runs in this window] |
+
+
+            | Trigger Event | State | Target System |
+
+            | --- | --- | --- |
+
+            | {{ alert.name }} | CRITICAL | technology-one-sm |\n"
+          enrich_alert:
+            - key: ticket_type
+              value: jira
+            - key: incident_closed
+              value: "false"
+            - key: ticket_id
+              value: results.issue.key
+            - key: ticket_url
+              value: results.ticket_url
+            - key: ticket_summary
+              value: "technology-one-sm (Application Layer) issue detected"
+    - name: cria-jira-worker-isolado
+      if: "'{{ alert.status }}' == 'firing' and '{{ alert.incident_closed }}' != 'false' and 'integrationworker' in '{{ alert.name }}'.lower()"
+      provider:
+        type: jira
+        config: "{{ providers.jira_free }}"
+        with:
+          board_name: "OPS board"
+          issue_type: Task
+          summary: "{{ alert.description }} failure detected"
+          description: "⚠️ **{{ alert.description }} Incident · Isolated Failure**
+
+
+            | Affected CI | Detalhe |
+
+            | --- | --- |
+
+            | **Affected CI** | {{ alert.description }} |
+
+            | **Resolver** | Data Squad |
+
+            | **Impact** | Specific integration queue is delayed/stopped. Core infrastructure is healthy. |
+
+            | **Logs** | [Grafana · Loki: check worker logs] |
+
+
+            | Trigger Event | State | Target System |
+
+            | --- | --- | --- |
+
+            | {{ alert.name }} | WARNING | EDW |\n"
+          enrich_alert:
+            - key: ticket_type
+              value: jira
+            - key: incident_closed
+              value: "false"
+            - key: ticket_id
+              value: results.issue.key
+            - key: ticket_url
+              value: results.ticket_url
+            - key: ticket_summary
+              value: "{{ alert.description }} failure detected"
+    - name: marca-incidente-encerrado
+      if: "'{{ alert.status }}' == 'resolved'"
+      provider:
+        type: mock
+        with:
+          enrich_alert:
+            - key: incident_closed
+              value: "true"
+    - name: fecha-ticket-jira
+      if: "'{{ alert.status }}' == 'resolved' and '{{ alert.ticket_id }}' not in ('', 'None') and '{{ alert.ticket_summary }}' not in ('', 'None')"
+      provider:
+        type: jira
+        config: "{{ providers.jira_free }}"
+        with:
+          issue_id: "{{ alert.ticket_id }}"
+          summary: "{{ alert.ticket_summary }}"
+          transition_to: "Feito"

@@ -1,0 +1,7 @@
+name: jira_free
+type: jira
+
+authentication:
+  host: "https://anotaaideivid.atlassian.net"
+  email: "anotaaideivid@gmail.com"
+  api_token: "{{ env.JIRA_API_TOKEN }}"

@@ -15,12 +15,26 @@ services:
       - ./prometheus:/etc/prometheus:ro
       - prometheus-data:/prometheus
     ports:
-      - "127.0.0.1:${PROMETHEUS_HOST_PORT:-9090}:9090"
+      - "0.0.0.0:${PROMETHEUS_HOST_PORT:-9090}:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yaml
+    volumes:
+      - ./alertmanager:/etc/alertmanager:ro
+    ports:
+      - "0.0.0.0:9093:9093"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   grafana:
     image: grafana/grafana:11.3.1
     restart: unless-stopped
-    depends_on: [prometheus]
+    depends_on: [ prometheus ]
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
@@ -35,7 +49,86 @@ services:
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
       - grafana-data:/var/lib/grafana
     ports:
-      - "127.0.0.1:${GRAFANA_HOST_PORT:-3000}:3000"
+      - "0.0.0.0:${GRAFANA_HOST_PORT:-3001}:3000"
+
+# KeepHq
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: keep
+      POSTGRES_PASSWORD: keep
+      POSTGRES_DB: keep
+    volumes:
+      - keep-db:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U keep" ]
+      interval: 5s
+      retries: 10
+    networks:
+      - default
+
+  backend:
+    image: us-central1-docker.pkg.dev/keephq/keep/keep-api:0.54.3
+    #image: us-central1-docker.pkg.dev/keephq/keep/keep-api:0.36.9
+    ports:
+      - "0.0.0.0:8080:8080"
+    environment:
+      - DATABASE_CONNECTION_STRING=postgresql://keep:keep@db:5432/keep
+      - SECRET_MANAGER_TYPE=FILE
+      - SECRET_MANAGER_DIRECTORY=/secret
+      - AUTH_TYPE=NO_AUTH
+      - KEEP_JWT_SECRET=keep-dev-secret-change-me
+      - KEEP_STORE_DBTYPE=postgres
+      - KEEP_API_URL=http://backend:8080
+      - KEEP_WORKFLOWS_DIRECTORY=/app/workflows
+      - KEEP_PROVIDERS_DIRECTORY=/app/providers
+      # Removi o token de proposito
+      - JIRA_API_TOKEN=ATATT3xFfGF04RPqsXMMhtCDRVducBmw9ZL0k0sMPbcgP6V71Jlm7UwA4GCP7GNweApuCVtERTxZgrjr5QLsJhTvQZ4IAatNUtuwUzrWFj0tln110oBNd1s9rRrNLdbIW7X-hQmNXTAKrZYUAgmHfgy4FI1Qt1mmmvDdI9lNEtFZva9_CUyjSV8=BD3747CE
+     
+     # - KEEP_DEFAULT_USERNAME=admin
+     # - KEEP_DEFAULT_PASSWORD=admin
+
+      - KEEP_EXTERNAL_URL=http://192.168.0.254:3000
+      
+    volumes:
+      - ./keep/keep-secrets:/secret
+      - ./keep/workflows:/app/workflows
+      - ./keep/providers:/app/providers
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - default
+      #- observability-sim
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      #- "cmdb.minimac.internal:host-gateway"
+
+  frontend:
+    image: us-central1-docker.pkg.dev/keephq/keep/keep-ui:0.54.3
+    #image: us-central1-docker.pkg.dev/keephq/keep/keep-ui:0.36.9
+    ports:
+      - "0.0.0.0:3000:3000"
+    environment:
+      - AUTH_TYPE=NO_AUTH   
+      #- AUTH_TYPE=DB
+      - NEXTAUTH_SECRET=keep-dev-secret-change-me
+      - NEXTAUTH_URL=http://192.168.0.254:3000
+      - API_URL=http://backend:8080
+      - NEXT_PUBLIC_KEEP_API_URL=http://192.168.0.254:8080
+      - NEXT_PUBLIC_API_URL=http://192.168.0.254:8080
+      - KEEP_JWT_SECRET=keep-dev-secret-change-me
+      - SECRET_MANAGER_TYPE=FILE
+
+    depends_on:
+      - backend
+    networks:
+      - default
+
+
+
+      
 
 # Shared network: both repos declare the same named network, so either stack can
 # start or stop first. Whichever starts second logs a harmless warning that the
@@ -47,3 +140,5 @@ networks:
 volumes:
   prometheus-data:
   grafana-data:
+  keep-db:
+  keep-secrets:  

@@ -11,14 +11,14 @@ simulator services ──▶ Prometheus ──▶ alert rules ──▶ [Alertma
                           └──▶ Grafana dashboard
 ```
 
-| Piece | Status |
-|---|---|
-| Prometheus scraping the 5 simulator services, with `ci_name` labels | ✅ running |
-| Alert rules (target/source down, integration failed, stale) | ✅ evaluated, shown at `/alerts` |
-| Grafana dashboard (health, timeline, runs, failures, data) | ✅ provisioned |
-| Jira Assets schemas and CMDB API | ✅ in [observability-cmdb](https://github.com/diegodss/observability-cmdb) (`GET /ci/{ci_name}`) |
-| Incident ticket templates (application, integration, connector) | ✅ designed |
-| Alertmanager / Keep calling the CMDB API, Jira ticket creation | ⏳ next |
+| Piece                                                                 | Status                                                                                            |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Prometheus scraping the 5 simulator services, with `ci_name` labels | ✅ running                                                                                        |
+| Alert rules (target/source down, integration failed, stale)           | ✅ evaluated, shown at `/alerts`                                                                |
+| Grafana dashboard (health, timeline, runs, failures, data)            | ✅ provisioned                                                                                    |
+| Jira Assets schemas and CMDB API                                      | ✅ in [observability-cmdb](https://github.com/diegodss/observability-cmdb) (`GET /ci/{ci_name}`) |
+| Incident ticket templates (application, integration, connector)       | ✅ designed                                                                                       |
+| Alertmanager / Keep calling the CMDB API, Jira ticket creation        | ⏳ next                                                                                           |
 
 > **Not production-hardened.** Local development setup: default Grafana credentials, anonymous
 > viewing, ports bound to `127.0.0.1`.
@@ -44,11 +44,11 @@ the simulator's services by name. Whichever stack starts second logs a harmless 
 network "was not created for project …"; that's expected. Until the simulator is up, its targets
 show as DOWN.
 
-| UI | URL |
-|---|---|
-| Grafana: home dashboard **Education Integration - Jobs and EDW health** (anonymous view; `admin` / `admin` to edit) | http://localhost:3000 |
-| Prometheus targets (all 5 should be UP) | http://localhost:9090/targets |
-| Prometheus alerts | http://localhost:9090/alerts |
+| UI                                                                                                                            | URL                           |
+| ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| Grafana: home dashboard **Education Integration - Jobs and EDW health** (anonymous view; `admin` / `admin` to edit) | http://localhost:3001         |
+| Prometheus targets (all 5 should be UP)                                                                                       | http://localhost:9090/targets |
+| Prometheus alerts                                                                                                             | http://localhost:9090/alerts  |
 
 **Stop** with `docker compose down`, or `down -v` to also drop Prometheus history. The two repos
 start and stop independently, in any order. The shared network is removed when the last stack using
@@ -63,6 +63,7 @@ docker compose stop edw
 ```
 
 Within about a minute, on the platform:
+
 - **Grafana:** EDW turns DOWN and the three flows turn FAILED; on the timeline, the flows go red right
   after EDW.
 - **Prometheus `/alerts`:** `TargetSystemUnavailable` (EDW) plus three `IntegrationLastRunFailed`
@@ -92,6 +93,7 @@ docs/incident-templates.md     Jira incident ticket templates
 ## How alerts map to the CMDB
 
 Every scraped series carries `ci_name`, the exact name of the CI in Jira Assets:
+
 - the applications are `Technology One (SM)` and `EDW`;
 - the integrations are the full `ETL - DXMULTI-0001 : AppEvents from SMS to EDW …` names.
 
@@ -112,13 +114,15 @@ integrations and domains) and **`routing`**, the Jira project and labels for the
 one project, labelled per resolver group (e.g. `resolver-data-squad`). When squads get their own
 projects, observability-cmdb's `data/routing.yaml` switches them over with no change here: Keep
 always creates the issue in `routing.project` with `routing.labels`. See:
+
 - [docs/alerting.md](docs/alerting.md): scrape jobs and alert rules;
 - [docs/incident-templates.md](docs/incident-templates.md): the ticket layouts, filled from that response.
 
 ## Configuration
 
 Defaults are in `compose.yaml`; override them in `.env` (see `.env.example`):
-- `PROMETHEUS_HOST_PORT` (9090) and `GRAFANA_HOST_PORT` (3000);
+
+- `PROMETHEUS_HOST_PORT` (9090) and `GRAFANA_HOST_PORT` (3001);
 - `GRAFANA_ADMIN_USER` / `GRAFANA_ADMIN_PASSWORD`.
 
 ## Next steps
