@@ -1,14 +1,23 @@
-# The suggested rules from docs/metrics.md. Prometheus evaluates them and shows
-# them at http://localhost:9090/alerts; no Alertmanager is configured yet, so nothing is sent.
+# Regras corrigidas. Mudanças em relação ao original:
+#  1. AppUnhealthy (DB): não resolve mais só porque o sistema parou de publicar
+#     app_up (ver comentário na regra).
+#  2. Todas as regras têm as labels `service` e `layer` (app | db | worker |
+#     integration), para o Keep poder rotear por label em vez de texto.
+#  3. Resumos (annotations.summary) mantidos IGUAIS aos originais, porque o
+#     workflow do Keep identifica EDW/Technology One e APP/DB por esses textos.
 groups:
   - name: education-integration-poc
     rules:
+      # ---------------------------------------------------------------------
+      # CAMADA APP: o Prometheus não consegue coletar métricas do sistema
+      # ---------------------------------------------------------------------
       - alert: TargetSystemUnavailable
         expr: up{job="edw"} == 0
         for: 20s
         labels:
           severity: critical
           service: edw
+          layer: app
           source: grafana
         annotations:
           summary: "{{ $labels.display_name }} cannot be scraped"
@@ -19,24 +28,48 @@ groups:
         labels:
           severity: critical
           service: technology-one-sm
+          layer: app
           source: grafana
         annotations:
           summary: "{{ $labels.display_name }} cannot be scraped"
 
+      # ---------------------------------------------------------------------
+      # CAMADA DB: o sistema reporta que o seu banco está inacessível
+      #
+      # app_up é publicada pelo próprio sistema. Se o sistema cai, a série
+      # DEIXA DE EXISTIR (não vai para 0), e a regra original resolvia o
+      # alerta de DB por falta de dado, mesmo com o banco ainda fora.
+      #
+      # last_over_time mantém o último valor conhecido por até 1h: se o banco
+      # estava fora quando o sistema caiu, o alerta continua ativo. Se o banco
+      # estava bem, o último valor é 1 e nada dispara. Ajuste a janela [1h]
+      # conforme o tempo que o time precisa para tratar o incidente.
+      #
+      # Limite: com o sistema fora, o estado do banco é DESCONHECIDO. Se o
+      # sistema cai com o banco saudável, não há alerta de DB (correto). Para
+      # medir o banco de forma independente do sistema, é preciso um probe
+      # ou exporter direto no banco.
+      # ---------------------------------------------------------------------
       - alert: AppUnhealthy
-        expr: app_up{app=~"technology-one-sm|edw"} == 0
+        expr: last_over_time(app_up{app=~"technology-one-sm|edw"}[1h]) == 0
         for: 20s
         labels:
           severity: warning
+          service: "{{ $labels.app }}"
+          layer: db
           source: grafana
         annotations:
           summary: "{{ $labels.app }} is running but its database is unreachable"
 
+      # ---------------------------------------------------------------------
+      # CAMADA INTEGRAÇÃO (sem regra correspondente no workflow do Keep hoje)
+      # ---------------------------------------------------------------------
       - alert: IntegrationLastRunFailed
         expr: integration_last_run_success == 0 and on(integration) integration_runs_total{outcome="failure"} > 0
         labels:
           severity: critical
           dependency: edw
+          layer: integration
           source: grafana
         annotations:
           summary: "{{ $labels.display_name }}: latest run failed (target {{ $labels.target }})"
@@ -45,21 +78,21 @@ groups:
         expr: time() - integration_last_success_timestamp_seconds > 90
         labels:
           severity: warning
+          layer: integration
           source: grafana
         annotations:
           summary: "{{ $labels.display_name }}: no successful run for over 90s"
 
-      # =========================================================================
-      # CAMADA AZUL: REGRA DINÂMICA COMPACTA (UP == 0)
-      # =========================================================================
+      # ---------------------------------------------------------------------
+      # CAMADA WORKER (faixa azul): qualquer worker de appevents fora do ar
+      # ---------------------------------------------------------------------
       - alert: IntegrationWorkerUnavailable
-        # Captura dinamicamente qualquer um dos três jobs de appevents que ficar DOWN
         expr: up{job=~"appevents-curriculum|appevents-general|appevents-student"} == 0
         for: 10s
         labels:
           severity: critical
           dependency: edw
+          layer: worker
           source: grafana
         annotations:
-          # Usa o display_name nativo que já existe no seu Prometheus (ex: AppEvents - Student)
           summary: "{{ $labels.display_name }} worker process has stopped"

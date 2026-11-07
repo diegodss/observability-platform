@@ -1,6 +1,6 @@
 workflow:
-  id: BKP2 grafana-edw-topology-routing-funcional
-  name: BKP2 Grafana -> EDW Root Cause Routing & Suppression
+  id: bkp-grafana-edw-topology-routing-funcional
+  name: BKP3Grafana -> EDW Root Cause Routing & Suppression
   description: Supressão nativa de sintomas e abertura única de Causa Raiz para a topologia EDW e Technology One com auto-fechamento
   disabled: true
   triggers:
@@ -22,7 +22,8 @@ workflow:
           board_name: "OPS board"
           issue_type: Task
           summary: "EDW (Database Layer) unavailable"
-          description: "🔴 **EDW (Database Layer) unavailable · Root Cause Identified**
+          description:
+            "🔴 **EDW (Database Layer) unavailable · Root Cause Identified**
 
 
             | Affected CI | Detalhe |
@@ -63,7 +64,8 @@ workflow:
           board_name: "OPS board"
           issue_type: Task
           summary: "EDW (Application Layer) issue detected"
-          description: "🔴 **EDW (Application Layer) unavailable · Root Cause Identified**
+          description:
+            "🔴 **EDW (Application Layer) unavailable · Root Cause Identified**
 
 
             | Affected CI | Detalhe |
@@ -104,7 +106,8 @@ workflow:
           board_name: "OPS board"
           issue_type: Task
           summary: "technology-one-sm (Database Layer) unavailable"
-          description: "🔴 **technology-one-sm (Database Layer) unavailable · Root Cause Identified**
+          description:
+            "🔴 **technology-one-sm (Database Layer) unavailable · Root Cause Identified**
 
 
             | Affected CI | Detalhe |
@@ -145,7 +148,8 @@ workflow:
           board_name: "OPS board"
           issue_type: Task
           summary: "technology-one-sm (Application Layer) issue detected"
-          description: "🔴 **technology-one-sm (Application Layer) unavailable · Root Cause Identified**
+          description:
+            "🔴 **technology-one-sm (Application Layer) unavailable · Root Cause Identified**
 
 
             | Affected CI | Detalhe |
@@ -186,7 +190,8 @@ workflow:
           board_name: "OPS board"
           issue_type: Task
           summary: "{{ alert.description }} failure detected"
-          description: "⚠️ **{{ alert.description }} Incident · Isolated Failure**
+          description:
+            "⚠️ **{{ alert.description }} Incident · Isolated Failure**
 
 
             | Affected CI | Detalhe |
