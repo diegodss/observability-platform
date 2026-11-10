@@ -1,0 +1,11 @@
+kubectl create configmap prometheus-config \
+--from-file=./prometheus/prometheus.yml \
+-n observability-platform --dry-run=client -o yaml > prometheus-cm.yaml
+
+kubectl create configmap grafana-provisioning \
+--from-file=./grafana/provisioning \
+-n observability-platform --dry-run=client -o yaml > grafana-prov-cm.yaml
+
+kubectl create configmap grafana-dashboards \
+--from-file=./grafana/dashboards \
+-n observability-platform --dry-run=client -o yaml > grafana-dash-cm.yaml

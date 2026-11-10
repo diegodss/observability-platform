@@ -1,0 +1,295 @@
+workflow:
+  id: grafana-edw-topology-routing
+  name: Grafana -> EDW Root Cause Routing & Suppression
+  description: Supressão nativa de sintomas e abertura única de Causa Raiz para a topologia EDW e Technology One com auto-fechamento
+  disabled: false
+  triggers:
+    - type: alert
+      filters:
+        - key: labels.source
+          value: grafana
+  consts: {}
+  owners: []
+  services: []
+  steps: []
+  actions:
+    # =========================================================================
+    # 1. CAMADA DE CAUSA RAIZ: EDW
+    #    Cada regra tem estado PROPRIO no alerta (inc_*, arm_*, tkt_*, url_*,
+    #    sum_*), entao um ticket aberto de uma camada (ex.: APP) nunca bloqueia
+    #    nem fecha o ticket de outra camada (ex.: DB).
+    #    inc_<camada> = "open" -> ja existe ticket aberto nesta camada
+    #    qualquer outro valor (vazio, "closed") -> cria.
+    # =========================================================================
+    - name: cria-jira-raiz-edw-db
+      if: "'{{ alert.status }}' == 'firing' and '{{ alert.inc_edw_db }}' != 'open' and ('edw' in '{{ alert.labels.service }} {{ alert.labels.app }}'.lower() or 'edw' in '{{ alert.description }}'.lower()) and ('unreachable' in '{{ alert.description }}'.lower() or 'database' in '{{ alert.description }}'.lower() or 'db' in '{{ alert.description }}'.lower())"
+      provider:
+        type: jira
+        config: "{{ providers.jira_free }}"
+        with:
+          board_name: "OPS board"
+          issue_type: Task
+          summary: "EDW (Database Layer) unavailable"
+          description: "🔴 **EDW (Database Layer) unavailable · Root Cause Identified**\n\n| Affected CI | Detalhe |\n| --- | --- |\n| **Affected CI** | EDW (Full Stack Affected) |\n| **Alert message** | {{ alert.description }} |\n| **Resolver** | Data Squad |\n| **Impact** | Downstream integration flow blocks are completely stopped. |\n| **Logs** | [Grafana · Loki: failed runs in this window] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | CRITICAL | EDW |\n"
+          enrich_alert:
+            - key: inc_edw_db
+              value: "open"
+            - key: arm_edw_db
+              value: "yes"
+            - key: tkt_edw_db
+              value: results.issue.key
+            - key: url_edw_db
+              value: results.ticket_url
+            - key: sum_edw_db
+              value: "EDW (Database Layer) unavailable"
+
+    - name: cria-jira-raiz-edw-app
+      if: "'{{ alert.status }}' == 'firing' and '{{ alert.inc_edw_app }}' != 'open' and ('edw' in '{{ alert.labels.service }} {{ alert.labels.app }}'.lower() or 'edw' in '{{ alert.description }}'.lower()) and ('scraped' in '{{ alert.description }}'.lower() or 'cannot' in '{{ alert.description }}'.lower()) and 'integrationworker' not in '{{ alert.name }}'.lower()"
+      provider:
+        type: jira
+        config: "{{ providers.jira_free }}"
+        with:
+          board_name: "OPS board"
+          issue_type: Task
+          summary: "EDW (Application Layer) issue detected"
+          description: "🔴 **EDW (Application Layer) unavailable · Root Cause Identified**\n\n| Affected CI | Detalhe |\n| --- | --- |\n| **Affected CI** | EDW (Full Stack Affected) |\n| **Alert message** | {{ alert.description }} |\n| **Resolver** | Data Squad |\n| **Impact** | Downstream integration flow blocks are completely stopped. |\n| **Logs** | [Grafana · Loki: failed runs in this window] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | CRITICAL | EDW |\n"
+          enrich_alert:
+            - key: inc_edw_app
+              value: "open"
+            - key: arm_edw_app
+              value: "yes"
+            - key: tkt_edw_app
+              value: results.issue.key
+            - key: url_edw_app
+              value: results.ticket_url
+            - key: sum_edw_app
+              value: "EDW (Application Layer) issue detected"
+
+    # =========================================================================
+    # 2. CAMADA DE CAUSA RAIZ: TECHNOLOGY ONE (SM)
+    # =========================================================================
+    - name: cria-jira-raiz-techone-db
+      if: "'{{ alert.status }}' == 'firing' and '{{ alert.inc_t1_db }}' != 'open' and ('technology-one' in '{{ alert.name }} {{ alert.description }} {{ alert.labels.service }} {{ alert.labels.app }}'.lower() or 'technology one' in '{{ alert.name }} {{ alert.description }} {{ alert.labels.service }} {{ alert.labels.app }}'.lower()) and ('unreachable' in '{{ alert.description }}'.lower() or 'database' in '{{ alert.description }}'.lower() or 'db' in '{{ alert.description }}'.lower())"
+      provider:
+        type: jira
+        config: "{{ providers.jira_free }}"
+        with:
+          board_name: "OPS board"
+          issue_type: Task
+          summary: "technology-one-sm (Database Layer) unavailable"
+          description: "🔴 **technology-one-sm (Database Layer) unavailable · Root Cause Identified**\n\n| Affected CI | Detalhe |\n| --- | --- |\n| **Affected CI** | technology-one-sm (Full Stack Affected) |\n| **Alert message** | {{ alert.description }} |\n| **Resolver** | Data Squad |\n| **Impact** | Downstream integration flow blocks are completely stopped. |\n| **Logs** | [Grafana · Loki: failed runs in this window] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | CRITICAL | technology-one-sm |\n"
+          enrich_alert:
+            - key: inc_t1_db
+              value: "open"
+            - key: arm_t1_db
+              value: "yes"
+            - key: tkt_t1_db
+              value: results.issue.key
+            - key: url_t1_db
+              value: results.ticket_url
+            - key: sum_t1_db
+              value: "technology-one-sm (Database Layer) unavailable"
+
+    - name: cria-jira-raiz-techone-app
+      if: "'{{ alert.status }}' == 'firing' and '{{ alert.inc_t1_app }}' != 'open' and ('technology-one' in '{{ alert.name }} {{ alert.description }} {{ alert.labels.service }} {{ alert.labels.app }}'.lower() or 'technology one' in '{{ alert.name }} {{ alert.description }} {{ alert.labels.service }} {{ alert.labels.app }}'.lower()) and ('scraped' in '{{ alert.description }}'.lower() or 'cannot' in '{{ alert.description }}'.lower())"
+      provider:
+        type: jira
+        config: "{{ providers.jira_free }}"
+        with:
+          board_name: "OPS board"
+          issue_type: Task
+          summary: "technology-one-sm (Application Layer) issue detected"
+          description: "🔴 **technology-one-sm (Application Layer) unavailable · Root Cause Identified**\n\n| Affected CI | Detalhe |\n| --- | --- |\n| **Affected CI** | technology-one-sm (Full Stack Affected) |\n| **Alert message** | {{ alert.description }} |\n| **Resolver** | Data Squad |\n| **Impact** | Downstream integration flow blocks are completely stopped. |\n| **Logs** | [Grafana · Loki: failed runs in this window] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | CRITICAL | technology-one-sm |\n"
+          enrich_alert:
+            - key: inc_t1_app
+              value: "open"
+            - key: arm_t1_app
+              value: "yes"
+            - key: tkt_t1_app
+              value: results.issue.key
+            - key: url_t1_app
+              value: results.ticket_url
+            - key: sum_t1_app
+              value: "technology-one-sm (Application Layer) issue detected"
+
+    # =========================================================================
+    # 3. CAMADA AZUL: WORKER ISOLADO
+    # =========================================================================
+    - name: cria-jira-worker-isolado
+      if: "'{{ alert.status }}' == 'firing' and '{{ alert.inc_worker }}' != 'open' and 'integrationworker' in '{{ alert.name }}'.lower()"
+      provider:
+        type: jira
+        config: "{{ providers.jira_free }}"
+        with:
+          board_name: "OPS board"
+          issue_type: Task
+          summary: "{{ alert.description }} failure detected"
+          description: "⚠️ **{{ alert.description }} Incident · Isolated Failure**\n\n| Affected CI | Detalhe |\n| --- | --- |\n| **Affected CI** | {{ alert.description }} |\n| **Resolver** | Data Squad |\n| **Impact** | Specific integration queue is delayed/stopped. Core infrastructure is healthy. |\n| **Logs** | [Grafana · Loki: check worker logs] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | WARNING | EDW |\n"
+          enrich_alert:
+            - key: inc_worker
+              value: "open"
+            - key: arm_worker
+              value: "yes"
+            - key: tkt_worker
+              value: results.issue.key
+            - key: url_worker
+              value: results.ticket_url
+            - key: sum_worker
+              value: "{{ alert.description }} failure detected"
+
+    # =========================================================================
+    # 4. FIM DO INCIDENTE
+    #    4.1 libera a criacao em TODAS as camadas (nao depende do Jira, entao
+    #        roda mesmo que algum ticket tenha sido apagado)
+    #    4.2 por camada: comenta no ticket e depois o move para Feito, apenas
+    #        se este alerta o abriu (arm_<camada> = "yes"), mantendo o titulo
+    #        original. O comentario usa credenciais na URL (secrets JIRA_USER e
+    #        JIRA_TOKEN do workflow), porque o header Authorization nao chega
+    #        ao Jira pelo provider http.
+    # =========================================================================
+    - name: libera-criacao-apos-resolved
+      if: "'{{ alert.status }}' == 'resolved'"
+      provider:
+        type: mock
+        with:
+          enrich_alert:
+            - key: inc_edw_db
+              value: "closed"
+            - key: inc_edw_app
+              value: "closed"
+            - key: inc_t1_db
+              value: "closed"
+            - key: inc_t1_app
+              value: "closed"
+            - key: inc_worker
+              value: "closed"
+
+    - name: comenta-ticket-edw-db
+      if: "'{{ alert.status }}' == 'resolved' and '{{ alert.arm_edw_db }}' == 'yes' and '{{ alert.tkt_edw_db }}' not in ('', 'None') and '{{ alert.sum_edw_db }}' not in ('', 'None')"
+      provider:
+        type: http
+        with:
+          method: POST
+          url: "https://{{ secrets.JIRA_USER }}:{{ secrets.JIRA_TOKEN }}@anotaaideivid.atlassian.net/rest/api/2/issue/{{ alert.tkt_edw_db }}/comment"
+          headers:
+            Content-Type: "application/json"
+            Accept: "application/json"
+          body:
+            body: "Alerta resolvido automaticamente pelo Keep. Alerta: {{ alert.name }} - {{ alert.description }}"
+
+    - name: fecha-ticket-edw-db
+      if: "'{{ alert.status }}' == 'resolved' and '{{ alert.arm_edw_db }}' == 'yes' and '{{ alert.tkt_edw_db }}' not in ('', 'None') and '{{ alert.sum_edw_db }}' not in ('', 'None')"
+      provider:
+        type: jira
+        config: "{{ providers.jira_free }}"
+        with:
+          issue_id: "{{ alert.tkt_edw_db }}"
+          summary: "{{ alert.sum_edw_db }}"
+          transition_to: "Feito"
+          enrich_alert:
+            - key: arm_edw_db
+              value: "no"
+
+    - name: comenta-ticket-edw-app
+      if: "'{{ alert.status }}' == 'resolved' and '{{ alert.arm_edw_app }}' == 'yes' and '{{ alert.tkt_edw_app }}' not in ('', 'None') and '{{ alert.sum_edw_app }}' not in ('', 'None')"
+      provider:
+        type: http
+        with:
+          method: POST
+          url: "https://{{ secrets.JIRA_USER }}:{{ secrets.JIRA_TOKEN }}@anotaaideivid.atlassian.net/rest/api/2/issue/{{ alert.tkt_edw_app }}/comment"
+          headers:
+            Content-Type: "application/json"
+            Accept: "application/json"
+          body:
+            body: "Alerta resolvido automaticamente pelo Keep. Alerta: {{ alert.name }} - {{ alert.description }}"
+
+    - name: fecha-ticket-edw-app
+      if: "'{{ alert.status }}' == 'resolved' and '{{ alert.arm_edw_app }}' == 'yes' and '{{ alert.tkt_edw_app }}' not in ('', 'None') and '{{ alert.sum_edw_app }}' not in ('', 'None')"
+      provider:
+        type: jira
+        config: "{{ providers.jira_free }}"
+        with:
+          issue_id: "{{ alert.tkt_edw_app }}"
+          summary: "{{ alert.sum_edw_app }}"
+          transition_to: "Feito"
+          enrich_alert:
+            - key: arm_edw_app
+              value: "no"
+
+    - name: comenta-ticket-t1-db
+      if: "'{{ alert.status }}' == 'resolved' and '{{ alert.arm_t1_db }}' == 'yes' and '{{ alert.tkt_t1_db }}' not in ('', 'None') and '{{ alert.sum_t1_db }}' not in ('', 'None')"
+      provider:
+        type: http
+        with:
+          method: POST
+          url: "https://{{ secrets.JIRA_USER }}:{{ secrets.JIRA_TOKEN }}@anotaaideivid.atlassian.net/rest/api/2/issue/{{ alert.tkt_t1_db }}/comment"
+          headers:
+            Content-Type: "application/json"
+            Accept: "application/json"
+          body:
+            body: "Alerta resolvido automaticamente pelo Keep. Alerta: {{ alert.name }} - {{ alert.description }}"
+
+    - name: fecha-ticket-t1-db
+      if: "'{{ alert.status }}' == 'resolved' and '{{ alert.arm_t1_db }}' == 'yes' and '{{ alert.tkt_t1_db }}' not in ('', 'None') and '{{ alert.sum_t1_db }}' not in ('', 'None')"
+      provider:
+        type: jira
+        config: "{{ providers.jira_free }}"
+        with:
+          issue_id: "{{ alert.tkt_t1_db }}"
+          summary: "{{ alert.sum_t1_db }}"
+          transition_to: "Feito"
+          enrich_alert:
+            - key: arm_t1_db
+              value: "no"
+
+    - name: comenta-ticket-t1-app
+      if: "'{{ alert.status }}' == 'resolved' and '{{ alert.arm_t1_app }}' == 'yes' and '{{ alert.tkt_t1_app }}' not in ('', 'None') and '{{ alert.sum_t1_app }}' not in ('', 'None')"
+      provider:
+        type: http
+        with:
+          method: POST
+          url: "https://{{ secrets.JIRA_USER }}:{{ secrets.JIRA_TOKEN }}@anotaaideivid.atlassian.net/rest/api/2/issue/{{ alert.tkt_t1_app }}/comment"
+          headers:
+            Content-Type: "application/json"
+            Accept: "application/json"
+          body:
+            body: "Alerta resolvido automaticamente pelo Keep. Alerta: {{ alert.name }} - {{ alert.description }}"
+
+    - name: fecha-ticket-t1-app
+      if: "'{{ alert.status }}' == 'resolved' and '{{ alert.arm_t1_app }}' == 'yes' and '{{ alert.tkt_t1_app }}' not in ('', 'None') and '{{ alert.sum_t1_app }}' not in ('', 'None')"
+      provider:
+        type: jira
+        config: "{{ providers.jira_free }}"
+        with:
+          issue_id: "{{ alert.tkt_t1_app }}"
+          summary: "{{ alert.sum_t1_app }}"
+          transition_to: "Feito"
+          enrich_alert:
+            - key: arm_t1_app
+              value: "no"
+
+    - name: comenta-ticket-worker
+      if: "'{{ alert.status }}' == 'resolved' and '{{ alert.arm_worker }}' == 'yes' and '{{ alert.tkt_worker }}' not in ('', 'None') and '{{ alert.sum_worker }}' not in ('', 'None')"
+      provider:
+        type: http
+        with:
+          method: POST
+          url: "https://{{ secrets.JIRA_USER }}:{{ secrets.JIRA_TOKEN }}@anotaaideivid.atlassian.net/rest/api/2/issue/{{ alert.tkt_worker }}/comment"
+          headers:
+            Content-Type: "application/json"
+            Accept: "application/json"
+          body:
+            body: "Alerta resolvido automaticamente pelo Keep. Alerta: {{ alert.name }} - {{ alert.description }}"
+
+    - name: fecha-ticket-worker
+      if: "'{{ alert.status }}' == 'resolved' and '{{ alert.arm_worker }}' == 'yes' and '{{ alert.tkt_worker }}' not in ('', 'None') and '{{ alert.sum_worker }}' not in ('', 'None')"
+      provider:
+        type: jira
+        config: "{{ providers.jira_free }}"
+        with:
+          issue_id: "{{ alert.tkt_worker }}"
+          summary: "{{ alert.sum_worker }}"
+          transition_to: "Feito"
+          enrich_alert:
+            - key: arm_worker
+              value: "no"
