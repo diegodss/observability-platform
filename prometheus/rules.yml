@@ -1,15 +1,15 @@
-# Regras corrigidas. Mudanças em relação ao original:
-#  1. AppUnhealthy (DB): não resolve mais só porque o sistema parou de publicar
-#     app_up (ver comentário na regra).
-#  2. Todas as regras têm as labels `service` e `layer` (app | db | worker |
-#     integration), para o Keep poder rotear por label em vez de texto.
-#  3. Resumos (annotations.summary) mantidos IGUAIS aos originais, porque o
-#     workflow do Keep identifica EDW/Technology One e APP/DB por esses textos.
+# Corrected rules. Changes compared to the original:
+#  1. AppUnhealthy (DB): no longer resolves just because the system stopped
+#     publishing app_up (see the comment on the rule).
+#  2. All rules have the `service` and `layer` labels (app | db | worker |
+#     integration), so Keep can route by label instead of by text.
+#  3. Summaries (annotations.summary) kept IDENTICAL to the originals, because
+#     the Keep workflow identifies EDW/Technology One and APP/DB by these texts.
 groups:
   - name: education-integration-poc
     rules:
       # ---------------------------------------------------------------------
-      # CAMADA APP: o Prometheus não consegue coletar métricas do sistema
+      # APP LAYER: Prometheus cannot scrape metrics from the system
       # ---------------------------------------------------------------------
       - alert: TargetSystemUnavailable
         expr: up{job="edw"} == 0
@@ -34,21 +34,22 @@ groups:
           summary: "{{ $labels.display_name }} cannot be scraped"
 
       # ---------------------------------------------------------------------
-      # CAMADA DB: o sistema reporta que o seu banco está inacessível
+      # DB LAYER: the system reports that its database is unreachable
       #
-      # app_up é publicada pelo próprio sistema. Se o sistema cai, a série
-      # DEIXA DE EXISTIR (não vai para 0), e a regra original resolvia o
-      # alerta de DB por falta de dado, mesmo com o banco ainda fora.
+      # app_up is published by the system itself. If the system goes down, the
+      # series STOPS EXISTING (it does not go to 0), and the original rule
+      # resolved the DB alert for lack of data, even with the database still
+      # down.
       #
-      # last_over_time mantém o último valor conhecido por até 1h: se o banco
-      # estava fora quando o sistema caiu, o alerta continua ativo. Se o banco
-      # estava bem, o último valor é 1 e nada dispara. Ajuste a janela [1h]
-      # conforme o tempo que o time precisa para tratar o incidente.
+      # last_over_time keeps the last known value for up to 1h: if the
+      # database was down when the system went down, the alert stays active.
+      # If the database was fine, the last value is 1 and nothing fires. Adjust
+      # the [1h] window to the time the team needs to handle the incident.
       #
-      # Limite: com o sistema fora, o estado do banco é DESCONHECIDO. Se o
-      # sistema cai com o banco saudável, não há alerta de DB (correto). Para
-      # medir o banco de forma independente do sistema, é preciso um probe
-      # ou exporter direto no banco.
+      # Limitation: with the system down, the database state is UNKNOWN. If
+      # the system goes down with a healthy database, there is no DB alert
+      # (correct). To measure the database independently of the system, you
+      # need a probe or exporter directly on the database.
       # ---------------------------------------------------------------------
       - alert: AppUnhealthy
         expr: last_over_time(app_up{app=~"technology-one-sm|edw"}[1h]) == 0
@@ -62,7 +63,7 @@ groups:
           summary: "{{ $labels.app }} is running but its database is unreachable"
 
       # ---------------------------------------------------------------------
-      # CAMADA INTEGRAÇÃO (sem regra correspondente no workflow do Keep hoje)
+      # INTEGRATION LAYER (no matching rule in the Keep workflow today)
       # ---------------------------------------------------------------------
       - alert: IntegrationLastRunFailed
         expr: integration_last_run_success == 0 and on(integration) integration_runs_total{outcome="failure"} > 0
@@ -84,7 +85,7 @@ groups:
           summary: "{{ $labels.display_name }}: no successful run for over 90s"
 
       # ---------------------------------------------------------------------
-      # CAMADA WORKER (faixa azul): qualquer worker de appevents fora do ar
+      # WORKER LAYER (blue band): any appevents worker that is down
       # ---------------------------------------------------------------------
       - alert: IntegrationWorkerUnavailable
         expr: up{job=~"appevents-curriculum|appevents-general|appevents-student"} == 0

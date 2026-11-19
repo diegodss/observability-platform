@@ -3,12 +3,12 @@ import sys
 import time
 
 while True:
-    print("Executando provisionamento de secrets...", flush=True)
+    print("Executing secrets provisioning...", flush=True)
 
     subprocess.run(
         [sys.executable, "/app/scripts/provision_secrets.py", "--apply"],
         check=False,
     )
 
-    print("Próxima execução em 30 segundos.", flush=True)
+    print("Next execution in 30 seconds.", flush=True)
     time.sleep(30)

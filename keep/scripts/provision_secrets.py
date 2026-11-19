@@ -137,7 +137,7 @@ def main():
             if not isinstance(existing, dict):
                 raise SystemExit(f"ERRO: JSON inválido em {secret_file.name}")
 
-        # Precedência: existentes < globais < individuais.
+        # Precedence: existing < global < individual.
         merged = {
             str(k).strip(): v
             for k, v in existing.items()

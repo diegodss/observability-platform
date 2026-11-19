@@ -50,10 +50,10 @@ groups:
           summary: "{{ $labels.display_name }}: no successful run for over 90s"
 
       # =========================================================================
-      # CAMADA AZUL: REGRA DINÂMICA COMPACTA (UP == 0)
+      # BLUE LAYER: COMPACT DYNAMIC RULE (UP == 0)
       # =========================================================================
       - alert: IntegrationWorkerUnavailable
-        # Captura dinamicamente qualquer um dos três jobs de appevents que ficar DOWN
+        # Dynamically catches any of the three appevents jobs that goes DOWN
         expr: up{job=~"appevents-curriculum|appevents-general|appevents-student"} == 0
         for: 10s
         labels:
@@ -61,5 +61,5 @@ groups:
           dependency: edw
           source: grafana
         annotations:
-          # Usa o display_name nativo que já existe no seu Prometheus (ex: AppEvents - Student)
+          # Uses the native display_name that already exists in your Prometheus (e.g. AppEvents - Student)
           summary: "{{ $labels.display_name }} worker process has stopped"
