@@ -27,10 +27,10 @@ workflow:
         type: jira
         config: "{{ providers.jira_free }}"
         with:
-          board_name: "OPS board"
+          project_key: "{{ alert.labels.jira_project }}"
           issue_type: Task
-          summary: "EDW (Database Layer) unavailable"
-          description: "🔴 **EDW (Database Layer) unavailable · Root Cause Identified**\n\n| Affected CI | Detalhe |\n| --- | --- |\n| **Affected CI** | EDW (Full Stack Affected) |\n| **Alert message** | {{ alert.description }} |\n| **Resolver** | Data Squad |\n| **Impact** | Downstream integration flow blocks are completely stopped. |\n| **Logs** | [Grafana · Loki: failed runs in this window] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | CRITICAL | EDW |\n"
+          summary: "{{ alert.labels.display_name }} (Database Layer) unavailable"
+          description: "🔴 **{{ alert.labels.display_name }} (Database Layer) unavailable · Root Cause Identified**\n\n| Affected CI | Detalhe |\n| --- | --- |\n| **Affected CI** | {{ alert.labels.ci_name }} (Full Stack Affected) |\n| **Alert message** | {{ alert.description }} |\n| **Resolver** | {{ alert.labels.team }} |\n| **Impact** | Downstream integration flow blocks are completely stopped. |\n| **Logs** | [Grafana · Loki: failed runs in this window] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | CRITICAL | {{ alert.labels.display_name }} |\n"
           enrich_alert:
             - key: inc_edw_db
               value: "open"
@@ -41,7 +41,7 @@ workflow:
             - key: url_edw_db
               value: results.ticket_url
             - key: sum_edw_db
-              value: "EDW (Database Layer) unavailable"
+              value: "{{ alert.labels.display_name }} (Database Layer) unavailable"
 
     - name: cria-jira-raiz-edw-app
       if: "'{{ alert.status }}' == 'firing' and '{{ alert.inc_edw_app }}' != 'open' and ('edw' in '{{ alert.labels.service }} {{ alert.labels.app }}'.lower() or 'edw' in '{{ alert.description }}'.lower()) and ('scraped' in '{{ alert.description }}'.lower() or 'cannot' in '{{ alert.description }}'.lower()) and 'integrationworker' not in '{{ alert.name }}'.lower()"
@@ -49,10 +49,10 @@ workflow:
         type: jira
         config: "{{ providers.jira_free }}"
         with:
-          board_name: "OPS board"
+          project_key: "{{ alert.labels.jira_project }}"
           issue_type: Task
-          summary: "EDW (Application Layer) issue detected"
-          description: "🔴 **EDW (Application Layer) unavailable · Root Cause Identified**\n\n| Affected CI | Detalhe |\n| --- | --- |\n| **Affected CI** | EDW (Full Stack Affected) |\n| **Alert message** | {{ alert.description }} |\n| **Resolver** | Data Squad |\n| **Impact** | Downstream integration flow blocks are completely stopped. |\n| **Logs** | [Grafana · Loki: failed runs in this window] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | CRITICAL | EDW |\n"
+          summary: "{{ alert.labels.display_name }} (Application Layer) issue detected"
+          description: "🔴 **{{ alert.labels.display_name }} (Application Layer) unavailable · Root Cause Identified**\n\n| Affected CI | Detalhe |\n| --- | --- |\n| **Affected CI** | {{ alert.labels.ci_name }} (Full Stack Affected) |\n| **Alert message** | {{ alert.description }} |\n| **Resolver** | {{ alert.labels.team }} |\n| **Impact** | Downstream integration flow blocks are completely stopped. |\n| **Logs** | [Grafana · Loki: failed runs in this window] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | CRITICAL | {{ alert.labels.display_name }} |\n"
           enrich_alert:
             - key: inc_edw_app
               value: "open"
@@ -63,7 +63,7 @@ workflow:
             - key: url_edw_app
               value: results.ticket_url
             - key: sum_edw_app
-              value: "EDW (Application Layer) issue detected"
+              value: "{{ alert.labels.display_name }} (Application Layer) issue detected"
 
     # =========================================================================
     # 2. ROOT CAUSE LAYER: TECHNOLOGY ONE (SM)
@@ -74,10 +74,10 @@ workflow:
         type: jira
         config: "{{ providers.jira_free }}"
         with:
-          board_name: "OPS board"
+          project_key: "{{ alert.labels.jira_project }}"
           issue_type: Task
-          summary: "technology-one-sm (Database Layer) unavailable"
-          description: "🔴 **technology-one-sm (Database Layer) unavailable · Root Cause Identified**\n\n| Affected CI | Detalhe |\n| --- | --- |\n| **Affected CI** | technology-one-sm (Full Stack Affected) |\n| **Alert message** | {{ alert.description }} |\n| **Resolver** | Data Squad |\n| **Impact** | Downstream integration flow blocks are completely stopped. |\n| **Logs** | [Grafana · Loki: failed runs in this window] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | CRITICAL | technology-one-sm |\n"
+          summary: "{{ alert.labels.display_name }} (Database Layer) unavailable"
+          description: "🔴 **{{ alert.labels.display_name }} (Database Layer) unavailable · Root Cause Identified**\n\n| Affected CI | Detalhe |\n| --- | --- |\n| **Affected CI** | {{ alert.labels.ci_name }} (Full Stack Affected) |\n| **Alert message** | {{ alert.description }} |\n| **Resolver** | {{ alert.labels.team }} |\n| **Impact** | Downstream integration flow blocks are completely stopped. |\n| **Logs** | [Grafana · Loki: failed runs in this window] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | CRITICAL | {{ alert.labels.display_name }} |\n"
           enrich_alert:
             - key: inc_t1_db
               value: "open"
@@ -88,7 +88,7 @@ workflow:
             - key: url_t1_db
               value: results.ticket_url
             - key: sum_t1_db
-              value: "technology-one-sm (Database Layer) unavailable"
+              value: "{{ alert.labels.display_name }} (Database Layer) unavailable"
 
     - name: cria-jira-raiz-techone-app
       if: "'{{ alert.status }}' == 'firing' and '{{ alert.inc_t1_app }}' != 'open' and ('technology-one' in '{{ alert.name }} {{ alert.description }} {{ alert.labels.service }} {{ alert.labels.app }}'.lower() or 'technology one' in '{{ alert.name }} {{ alert.description }} {{ alert.labels.service }} {{ alert.labels.app }}'.lower()) and ('scraped' in '{{ alert.description }}'.lower() or 'cannot' in '{{ alert.description }}'.lower())"
@@ -96,10 +96,10 @@ workflow:
         type: jira
         config: "{{ providers.jira_free }}"
         with:
-          board_name: "OPS board"
+          project_key: "{{ alert.labels.jira_project }}"
           issue_type: Task
-          summary: "technology-one-sm (Application Layer) issue detected"
-          description: "🔴 **technology-one-sm (Application Layer) unavailable · Root Cause Identified**\n\n| Affected CI | Detalhe |\n| --- | --- |\n| **Affected CI** | technology-one-sm (Full Stack Affected) |\n| **Alert message** | {{ alert.description }} |\n| **Resolver** | Data Squad |\n| **Impact** | Downstream integration flow blocks are completely stopped. |\n| **Logs** | [Grafana · Loki: failed runs in this window] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | CRITICAL | technology-one-sm |\n"
+          summary: "{{ alert.labels.display_name }} (Application Layer) issue detected"
+          description: "🔴 **{{ alert.labels.display_name }} (Application Layer) unavailable · Root Cause Identified**\n\n| Affected CI | Detalhe |\n| --- | --- |\n| **Affected CI** | {{ alert.labels.ci_name }} (Full Stack Affected) |\n| **Alert message** | {{ alert.description }} |\n| **Resolver** | {{ alert.labels.team }} |\n| **Impact** | Downstream integration flow blocks are completely stopped. |\n| **Logs** | [Grafana · Loki: failed runs in this window] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | CRITICAL | {{ alert.labels.display_name }} |\n"
           enrich_alert:
             - key: inc_t1_app
               value: "open"
@@ -110,7 +110,7 @@ workflow:
             - key: url_t1_app
               value: results.ticket_url
             - key: sum_t1_app
-              value: "technology-one-sm (Application Layer) issue detected"
+              value: "{{ alert.labels.display_name }} (Application Layer) issue detected"
 
     # =========================================================================
     # 3. BLUE LAYER: ISOLATED WORKER
@@ -121,10 +121,10 @@ workflow:
         type: jira
         config: "{{ providers.jira_free }}"
         with:
-          board_name: "OPS board"
+          project_key: "{{ alert.labels.jira_project }}"
           issue_type: Task
           summary: "{{ alert.description }} failure detected"
-          description: "⚠️ **{{ alert.description }} Incident · Isolated Failure**\n\n| Affected CI | Detalhe |\n| --- | --- |\n| **Affected CI** | {{ alert.description }} |\n| **Resolver** | Data Squad |\n| **Impact** | Specific integration queue is delayed/stopped. Core infrastructure is healthy. |\n| **Logs** | [Grafana · Loki: check worker logs] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | WARNING | EDW |\n"
+          description: "⚠️ **{{ alert.description }} Incident · Isolated Failure**\n\n| Affected CI | Detalhe |\n| --- | --- |\n| **Affected CI** | {{ alert.labels.ci_name }} |\n| **Resolver** | {{ alert.labels.team }} |\n| **Impact** | Specific integration queue is delayed/stopped. Core infrastructure is healthy. |\n| **Logs** | [Grafana · Loki: check worker logs] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | WARNING | EDW |\n"
           enrich_alert:
             - key: inc_worker
               value: "open"

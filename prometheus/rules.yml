@@ -5,30 +5,48 @@
 #     integration), so Keep can route by label instead of by text.
 #  3. Summaries (annotations.summary) kept IDENTICAL to the originals, because
 #     the Keep workflow identifies EDW/Technology One and APP/DB by these texts.
+#  4. TargetSystemUnavailable and SourceSystemUnavailable (APP) are suppressed
+#     while the DB alert of the same system is active, so a database outage
+#     opens only the DB ticket (the root cause), not an extra APP ticket.
+#  5. app/db/worker alerts carry a `jira_project` label (Jira project KEY where
+#     Keep creates the ticket): APP for the app layer, DB for the db layer and
+#     OPS for workers. Replace these placeholders with the real project keys.
+#     They also carry a `team` label (shown as "Resolver" in the ticket). Set it per
+#     rule when different layers belong to different teams.
 groups:
   - name: education-integration-poc
     rules:
       # ---------------------------------------------------------------------
       # APP LAYER: Prometheus cannot scrape metrics from the system
+      #
+      # Suppressed (unless ...) while the DB alert of the same system is active,
+      # that is, while the last known app_up of that system is 0. In that case
+      # the database is the root cause and the app being unreachable is only
+      # the symptom. If the app goes down with no app_up == 0 ever reported,
+      # this alert fires normally.
       # ---------------------------------------------------------------------
       - alert: TargetSystemUnavailable
-        expr: up{job="edw"} == 0
+        expr: (up{job="edw"} == 0) unless on() (last_over_time(app_up{app="edw"}[1h]) == 0)
         for: 20s
         labels:
           severity: critical
           service: edw
           layer: app
+          jira_project: "TI"
+          team: "Integrations/APP Squad"
           source: grafana
         annotations:
           summary: "{{ $labels.display_name }} cannot be scraped"
 
       - alert: SourceSystemUnavailable
-        expr: up{job="technology-one-sm"} == 0
+        expr: (up{job="technology-one-sm"} == 0) unless on() (last_over_time(app_up{app="technology-one-sm"}[1h]) == 0)
         for: 20s
         labels:
           severity: critical
           service: technology-one-sm
           layer: app
+          jira_project: "TI"
+          team: "Integrations/APP Squad"
           source: grafana
         annotations:
           summary: "{{ $labels.display_name }} cannot be scraped"
@@ -58,6 +76,8 @@ groups:
           severity: warning
           service: "{{ $labels.app }}"
           layer: db
+          jira_project: "TD"
+          team: "DataBase Squad"
           source: grafana
         annotations:
           summary: "{{ $labels.app }} is running but its database is unreachable"
@@ -94,6 +114,8 @@ groups:
           severity: critical
           dependency: edw
           layer: worker
+          jira_project: "OPS"
+          team: "Operations Squad"
           source: grafana
         annotations:
           summary: "{{ $labels.display_name }} worker process has stopped"
