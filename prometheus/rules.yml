@@ -32,7 +32,7 @@ groups:
           severity: critical
           service: edw
           layer: app
-          jira_project: "TI"
+          jira_project: "EDW"
           team: "Integrations/APP Squad"
           source: grafana
         annotations:
@@ -45,39 +45,35 @@ groups:
           severity: critical
           service: technology-one-sm
           layer: app
-          jira_project: "TI"
+          jira_project: "SMO"
           team: "Integrations/APP Squad"
           source: grafana
         annotations:
           summary: "{{ $labels.display_name }} cannot be scraped"
 
-      # ---------------------------------------------------------------------
-      # DB LAYER: the system reports that its database is unreachable
-      #
-      # app_up is published by the system itself. If the system goes down, the
-      # series STOPS EXISTING (it does not go to 0), and the original rule
-      # resolved the DB alert for lack of data, even with the database still
-      # down.
-      #
-      # last_over_time keeps the last known value for up to 1h: if the
-      # database was down when the system went down, the alert stays active.
-      # If the database was fine, the last value is 1 and nothing fires. Adjust
-      # the [1h] window to the time the team needs to handle the incident.
-      #
-      # Limitation: with the system down, the database state is UNKNOWN. If
-      # the system goes down with a healthy database, there is no DB alert
-      # (correct). To measure the database independently of the system, you
-      # need a probe or exporter directly on the database.
-      # ---------------------------------------------------------------------
+      # DB LAYER: one rule per system, so each can have its own team and project.
       - alert: AppUnhealthy
-        expr: last_over_time(app_up{app=~"technology-one-sm|edw"}[1h]) == 0
+        expr: last_over_time(app_up{app="edw"}[1h]) == 0
         for: 20s
         labels:
           severity: warning
           service: "{{ $labels.app }}"
           layer: db
-          jira_project: "TD"
-          team: "DataBase Squad"
+          jira_project: "EDW"
+          team: "Data Squad"
+          source: grafana
+        annotations:
+          summary: "{{ $labels.app }} is running but its database is unreachable"
+
+      - alert: AppUnhealthy
+        expr: last_over_time(app_up{app="technology-one-sm"}[1h]) == 0
+        for: 20s
+        labels:
+          severity: warning
+          service: "{{ $labels.app }}"
+          layer: db
+          jira_project: "SMO"
+          team: "Data Squad"
           source: grafana
         annotations:
           summary: "{{ $labels.app }} is running but its database is unreachable"
@@ -116,6 +112,48 @@ groups:
           layer: worker
           jira_project: "OPS"
           team: "Operations Squad"
+          source: grafana
+        annotations:
+          summary: "{{ $labels.display_name }} worker process has stopped"
+
+      # ---------------------------------------------------------------------
+      # WORKER LAYERS (blue band): each appevents worker that is down
+      # ---------------------------------------------------------------------
+      - alert: IntegrationWorkerUnavailable
+        expr: up{job="appevents-curriculum"} == 0
+        for: 10s
+        labels:
+          severity: critical
+          dependency: edw
+          layer: worker
+          jira_project: "OCV"
+          team: "Operations Curriculum Squad"
+          source: grafana
+        annotations:
+          summary: "{{ $labels.display_name }} worker process has stopped"
+
+      - alert: IntegrationWorkerUnavailable
+        expr: up{job="appevents-general"} == 0
+        for: 10s
+        labels:
+          severity: critical
+          dependency: edw
+          layer: worker
+          jira_project: "OGNL"
+          team: "Operations General Squad"
+          source: grafana
+        annotations:
+          summary: "{{ $labels.display_name }} worker process has stopped"
+
+      - alert: IntegrationWorkerUnavailable
+        expr: up{job="appevents-student"} == 0
+        for: 10s
+        labels:
+          severity: critical
+          dependency: edw
+          layer: worker
+          jira_project: "OSTD"
+          team: "Operations Curriculum Squad"
           source: grafana
         annotations:
           summary: "{{ $labels.display_name }} worker process has stopped"

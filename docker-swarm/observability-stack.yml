@@ -130,7 +130,7 @@ services:
           - node.labels.obs == true
 
   keep-backend:
-    image: us-central1-docker.pkg.dev/keephq/keep/keep-api:0.54.3
+    image: us-central1-docker.pkg.dev/keephq/keep/keep-api:0.55.0
     environment:
       - DATABASE_CONNECTION_STRING=postgresql://keep:keep@keep-db:5432/keep
       - SECRET_MANAGER_TYPE=FILE
@@ -171,7 +171,7 @@ services:
         - traefik.http.services.obs-keep-api.loadbalancer.server.port=8080
 
   keep-frontend:
-    image: us-central1-docker.pkg.dev/keephq/keep/keep-ui:0.54.3
+    image: us-central1-docker.pkg.dev/keephq/keep/keep-ui:0.55.0
     environment:
       - AUTH_TYPE=NO_AUTH
       - NEXTAUTH_SECRET=keep-dev-secret-change-me
