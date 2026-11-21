@@ -8,7 +8,16 @@ workflow:
       filters:
         - key: labels.source
           value: grafana
-  consts: {}
+  consts:
+    jira_host: "anotaaideivid.atlassian.net"
+    jira_issue_type: "Task"
+    jira_done_status: "Feito"
+    resolved_comment: "Alert resolved automatically by Keep."
+    impact_downstream: "Downstream integration flow blocks are completely stopped."
+    # Dashboard link shown in the ticket "Logs" row. Replace the dashboard path
+    # with the one from your dashboard URL (the part starting at /d/).
+    grafana_url: "http://grafana.swarm.test"
+    grafana_dashboard_path: "/"
   owners: []
   services: []
   steps: []
@@ -28,9 +37,9 @@ workflow:
         config: "{{ providers.jira_free }}"
         with:
           project_key: "{{ alert.labels.jira_project }}"
-          issue_type: Task
+          issue_type: "{{ consts.jira_issue_type }}"
           summary: "{{ alert.labels.display_name }} (Database Layer) unavailable"
-          description: "🔴 **{{ alert.labels.display_name }} (Database Layer) unavailable · Root Cause Identified**\n\n| Affected CI | Detalhe |\n| --- | --- |\n| **Affected CI** | {{ alert.labels.ci_name }} (Full Stack Affected) |\n| **Alert message** | {{ alert.description }} |\n| **Resolver** | {{ alert.labels.team }} |\n| **Impact** | Downstream integration flow blocks are completely stopped. |\n| **Logs** | [Grafana · Loki: failed runs in this window] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | CRITICAL | {{ alert.labels.display_name }} |\n"
+          description: "🔴 **{{ alert.labels.display_name }} (Database Layer) unavailable · Root Cause Identified**\n\n| Affected CI | Details |\n| --- | --- |\n| **Affected CI** | {{ alert.labels.ci_name }} (Full Stack Affected) |\n| **Alert message** | {{ alert.description }} |\n| **Resolver** | {{ alert.labels.team }} |\n| **Impact** | {{ consts.impact_downstream }} |\n| **Logs** | [Grafana · Dashboard: failed runs in this window|{{ consts.grafana_url }}{{ consts.grafana_dashboard_path }}?from=now-1h] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | CRITICAL | {{ alert.labels.display_name }} |\n"
           enrich_alert:
             - key: inc_edw_db
               value: "open"
@@ -50,9 +59,9 @@ workflow:
         config: "{{ providers.jira_free }}"
         with:
           project_key: "{{ alert.labels.jira_project }}"
-          issue_type: Task
+          issue_type: "{{ consts.jira_issue_type }}"
           summary: "{{ alert.labels.display_name }} (Application Layer) issue detected"
-          description: "🔴 **{{ alert.labels.display_name }} (Application Layer) unavailable · Root Cause Identified**\n\n| Affected CI | Detalhe |\n| --- | --- |\n| **Affected CI** | {{ alert.labels.ci_name }} (Full Stack Affected) |\n| **Alert message** | {{ alert.description }} |\n| **Resolver** | {{ alert.labels.team }} |\n| **Impact** | Downstream integration flow blocks are completely stopped. |\n| **Logs** | [Grafana · Loki: failed runs in this window] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | CRITICAL | {{ alert.labels.display_name }} |\n"
+          description: "🔴 **{{ alert.labels.display_name }} (Application Layer) unavailable · Root Cause Identified**\n\n| Affected CI | Details |\n| --- | --- |\n| **Affected CI** | {{ alert.labels.ci_name }} (Full Stack Affected) |\n| **Alert message** | {{ alert.description }} |\n| **Resolver** | {{ alert.labels.team }} |\n| **Impact** | {{ consts.impact_downstream }} |\n| **Logs** | [Grafana · Dashboard: failed runs in this window|{{ consts.grafana_url }}{{ consts.grafana_dashboard_path }}?from=now-1h] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | CRITICAL | {{ alert.labels.display_name }} |\n"
           enrich_alert:
             - key: inc_edw_app
               value: "open"
@@ -75,9 +84,9 @@ workflow:
         config: "{{ providers.jira_free }}"
         with:
           project_key: "{{ alert.labels.jira_project }}"
-          issue_type: Task
+          issue_type: "{{ consts.jira_issue_type }}"
           summary: "{{ alert.labels.display_name }} (Database Layer) unavailable"
-          description: "🔴 **{{ alert.labels.display_name }} (Database Layer) unavailable · Root Cause Identified**\n\n| Affected CI | Detalhe |\n| --- | --- |\n| **Affected CI** | {{ alert.labels.ci_name }} (Full Stack Affected) |\n| **Alert message** | {{ alert.description }} |\n| **Resolver** | {{ alert.labels.team }} |\n| **Impact** | Downstream integration flow blocks are completely stopped. |\n| **Logs** | [Grafana · Loki: failed runs in this window] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | CRITICAL | {{ alert.labels.display_name }} |\n"
+          description: "🔴 **{{ alert.labels.display_name }} (Database Layer) unavailable · Root Cause Identified**\n\n| Affected CI | Details |\n| --- | --- |\n| **Affected CI** | {{ alert.labels.ci_name }} (Full Stack Affected) |\n| **Alert message** | {{ alert.description }} |\n| **Resolver** | {{ alert.labels.team }} |\n| **Impact** | {{ consts.impact_downstream }} |\n| **Logs** | [Grafana · Dashboard: failed runs in this window|{{ consts.grafana_url }}{{ consts.grafana_dashboard_path }}?from=now-1h] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | CRITICAL | {{ alert.labels.display_name }} |\n"
           enrich_alert:
             - key: inc_t1_db
               value: "open"
@@ -97,9 +106,9 @@ workflow:
         config: "{{ providers.jira_free }}"
         with:
           project_key: "{{ alert.labels.jira_project }}"
-          issue_type: Task
+          issue_type: "{{ consts.jira_issue_type }}"
           summary: "{{ alert.labels.display_name }} (Application Layer) issue detected"
-          description: "🔴 **{{ alert.labels.display_name }} (Application Layer) unavailable · Root Cause Identified**\n\n| Affected CI | Detalhe |\n| --- | --- |\n| **Affected CI** | {{ alert.labels.ci_name }} (Full Stack Affected) |\n| **Alert message** | {{ alert.description }} |\n| **Resolver** | {{ alert.labels.team }} |\n| **Impact** | Downstream integration flow blocks are completely stopped. |\n| **Logs** | [Grafana · Loki: failed runs in this window] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | CRITICAL | {{ alert.labels.display_name }} |\n"
+          description: "🔴 **{{ alert.labels.display_name }} (Application Layer) unavailable · Root Cause Identified**\n\n| Affected CI | Details |\n| --- | --- |\n| **Affected CI** | {{ alert.labels.ci_name }} (Full Stack Affected) |\n| **Alert message** | {{ alert.description }} |\n| **Resolver** | {{ alert.labels.team }} |\n| **Impact** | {{ consts.impact_downstream }} |\n| **Logs** | [Grafana · Dashboard: failed runs in this window|{{ consts.grafana_url }}{{ consts.grafana_dashboard_path }}?from=now-1h] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | CRITICAL | {{ alert.labels.display_name }} |\n"
           enrich_alert:
             - key: inc_t1_app
               value: "open"
@@ -122,9 +131,9 @@ workflow:
         config: "{{ providers.jira_free }}"
         with:
           project_key: "{{ alert.labels.jira_project }}"
-          issue_type: Task
+          issue_type: "{{ consts.jira_issue_type }}"
           summary: "{{ alert.description }} failure detected"
-          description: "⚠️ **{{ alert.description }} Incident · Isolated Failure**\n\n| Affected CI | Detalhe |\n| --- | --- |\n| **Affected CI** | {{ alert.labels.ci_name }} |\n| **Resolver** | {{ alert.labels.team }} |\n| **Impact** | Specific integration queue is delayed/stopped. Core infrastructure is healthy. |\n| **Logs** | [Grafana · Loki: check worker logs] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | WARNING | EDW |\n"
+          description: "⚠️ **{{ alert.description }} Incident · Isolated Failure**\n\n| Affected CI | Details |\n| --- | --- |\n| **Affected CI** | {{ alert.labels.ci_name }} |\n| **Resolver** | {{ alert.labels.team }} |\n| **Impact** | Specific integration queue is delayed/stopped. Core infrastructure is healthy. |\n| **Logs** | [Grafana · Dashboard: check worker status|{{ consts.grafana_url }}{{ consts.grafana_dashboard_path }}?from=now-1h] |\n\n| Trigger Event | State | Target System |\n| --- | --- | --- |\n| {{ alert.name }} | WARNING | {{ alert.labels.dependency }} |\n"
           enrich_alert:
             - key: inc_worker
               value: "open"
@@ -170,12 +179,12 @@ workflow:
         type: http
         with:
           method: POST
-          url: "https://{{ secrets.JIRA_USER }}:{{ secrets.JIRA_TOKEN }}@anotaaideivid.atlassian.net/rest/api/2/issue/{{ alert.tkt_edw_db }}/comment"
+          url: "https://{{ secrets.JIRA_USER }}:{{ secrets.JIRA_TOKEN }}@{{ consts.jira_host }}/rest/api/2/issue/{{ alert.tkt_edw_db }}/comment"
           headers:
             Content-Type: "application/json"
             Accept: "application/json"
           body:
-            body: "Alerta resolvido automaticamente pelo Keep. Alerta: {{ alert.name }} - {{ alert.description }}"
+            body: "{{ consts.resolved_comment }} Alert: {{ alert.name }} - {{ alert.description }}"
 
     - name: fecha-ticket-edw-db
       if: "'{{ alert.status }}' == 'resolved' and '{{ alert.arm_edw_db }}' == 'yes' and '{{ alert.tkt_edw_db }}' not in ('', 'None') and '{{ alert.sum_edw_db }}' not in ('', 'None')"
@@ -185,7 +194,7 @@ workflow:
         with:
           issue_id: "{{ alert.tkt_edw_db }}"
           summary: "{{ alert.sum_edw_db }}"
-          transition_to: "Feito"
+          transition_to: "{{ consts.jira_done_status }}"
           enrich_alert:
             - key: arm_edw_db
               value: "no"
@@ -196,12 +205,12 @@ workflow:
         type: http
         with:
           method: POST
-          url: "https://{{ secrets.JIRA_USER }}:{{ secrets.JIRA_TOKEN }}@anotaaideivid.atlassian.net/rest/api/2/issue/{{ alert.tkt_edw_app }}/comment"
+          url: "https://{{ secrets.JIRA_USER }}:{{ secrets.JIRA_TOKEN }}@{{ consts.jira_host }}/rest/api/2/issue/{{ alert.tkt_edw_app }}/comment"
           headers:
             Content-Type: "application/json"
             Accept: "application/json"
           body:
-            body: "Alerta resolvido automaticamente pelo Keep. Alerta: {{ alert.name }} - {{ alert.description }}"
+            body: "{{ consts.resolved_comment }} Alert: {{ alert.name }} - {{ alert.description }}"
 
     - name: fecha-ticket-edw-app
       if: "'{{ alert.status }}' == 'resolved' and '{{ alert.arm_edw_app }}' == 'yes' and '{{ alert.tkt_edw_app }}' not in ('', 'None') and '{{ alert.sum_edw_app }}' not in ('', 'None')"
@@ -211,7 +220,7 @@ workflow:
         with:
           issue_id: "{{ alert.tkt_edw_app }}"
           summary: "{{ alert.sum_edw_app }}"
-          transition_to: "Feito"
+          transition_to: "{{ consts.jira_done_status }}"
           enrich_alert:
             - key: arm_edw_app
               value: "no"
@@ -222,12 +231,12 @@ workflow:
         type: http
         with:
           method: POST
-          url: "https://{{ secrets.JIRA_USER }}:{{ secrets.JIRA_TOKEN }}@anotaaideivid.atlassian.net/rest/api/2/issue/{{ alert.tkt_t1_db }}/comment"
+          url: "https://{{ secrets.JIRA_USER }}:{{ secrets.JIRA_TOKEN }}@{{ consts.jira_host }}/rest/api/2/issue/{{ alert.tkt_t1_db }}/comment"
           headers:
             Content-Type: "application/json"
             Accept: "application/json"
           body:
-            body: "Alerta resolvido automaticamente pelo Keep. Alerta: {{ alert.name }} - {{ alert.description }}"
+            body: "{{ consts.resolved_comment }} Alert: {{ alert.name }} - {{ alert.description }}"
 
     - name: fecha-ticket-t1-db
       if: "'{{ alert.status }}' == 'resolved' and '{{ alert.arm_t1_db }}' == 'yes' and '{{ alert.tkt_t1_db }}' not in ('', 'None') and '{{ alert.sum_t1_db }}' not in ('', 'None')"
@@ -237,7 +246,7 @@ workflow:
         with:
           issue_id: "{{ alert.tkt_t1_db }}"
           summary: "{{ alert.sum_t1_db }}"
-          transition_to: "Feito"
+          transition_to: "{{ consts.jira_done_status }}"
           enrich_alert:
             - key: arm_t1_db
               value: "no"
@@ -248,12 +257,12 @@ workflow:
         type: http
         with:
           method: POST
-          url: "https://{{ secrets.JIRA_USER }}:{{ secrets.JIRA_TOKEN }}@anotaaideivid.atlassian.net/rest/api/2/issue/{{ alert.tkt_t1_app }}/comment"
+          url: "https://{{ secrets.JIRA_USER }}:{{ secrets.JIRA_TOKEN }}@{{ consts.jira_host }}/rest/api/2/issue/{{ alert.tkt_t1_app }}/comment"
           headers:
             Content-Type: "application/json"
             Accept: "application/json"
           body:
-            body: "Alerta resolvido automaticamente pelo Keep. Alerta: {{ alert.name }} - {{ alert.description }}"
+            body: "{{ consts.resolved_comment }} Alert: {{ alert.name }} - {{ alert.description }}"
 
     - name: fecha-ticket-t1-app
       if: "'{{ alert.status }}' == 'resolved' and '{{ alert.arm_t1_app }}' == 'yes' and '{{ alert.tkt_t1_app }}' not in ('', 'None') and '{{ alert.sum_t1_app }}' not in ('', 'None')"
@@ -263,7 +272,7 @@ workflow:
         with:
           issue_id: "{{ alert.tkt_t1_app }}"
           summary: "{{ alert.sum_t1_app }}"
-          transition_to: "Feito"
+          transition_to: "{{ consts.jira_done_status }}"
           enrich_alert:
             - key: arm_t1_app
               value: "no"
@@ -274,12 +283,12 @@ workflow:
         type: http
         with:
           method: POST
-          url: "https://{{ secrets.JIRA_USER }}:{{ secrets.JIRA_TOKEN }}@anotaaideivid.atlassian.net/rest/api/2/issue/{{ alert.tkt_worker }}/comment"
+          url: "https://{{ secrets.JIRA_USER }}:{{ secrets.JIRA_TOKEN }}@{{ consts.jira_host }}/rest/api/2/issue/{{ alert.tkt_worker }}/comment"
           headers:
             Content-Type: "application/json"
             Accept: "application/json"
           body:
-            body: "Alerta resolvido automaticamente pelo Keep. Alerta: {{ alert.name }} - {{ alert.description }}"
+            body: "{{ consts.resolved_comment }} Alert: {{ alert.name }} - {{ alert.description }}"
 
     - name: fecha-ticket-worker
       if: "'{{ alert.status }}' == 'resolved' and '{{ alert.arm_worker }}' == 'yes' and '{{ alert.tkt_worker }}' not in ('', 'None') and '{{ alert.sum_worker }}' not in ('', 'None')"
@@ -289,7 +298,7 @@ workflow:
         with:
           issue_id: "{{ alert.tkt_worker }}"
           summary: "{{ alert.sum_worker }}"
-          transition_to: "Feito"
+          transition_to: "{{ consts.jira_done_status }}"
           enrich_alert:
             - key: arm_worker
               value: "no"
