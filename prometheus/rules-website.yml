@@ -1,25 +1,25 @@
 groups:
   - name: website-availability
     rules:
-      - alert: BlackboxProbeFailed
+      - alert: BlackboxProbeFailed #Alert for HTTP, TCP, ICMP and DNS
         expr: probe_success{job=~"blackbox-http|blackbox-tcp|blackbox-icmp|blackbox-dns"} == 0
         for: 1m
         labels:
           severity: critical
         annotations:
           summary: "Alvo indisponível: {{ $labels.instance }}"
-          description: "A verificação {{ $labels.job }} {{ $labels.instance }} falha há pelo menos 1 minuto."
+          description: "The check {{ $labels.job }} {{ $labels.instance }} has been failing for at least 1 minute."
 
-      - alert: WebsiteResponseSlow
+      - alert: WebsiteResponseSlow #Webpage Slow
         expr: probe_duration_seconds{job="blackbox-http"} > 3
         for: 5m
         labels:
           severity: warning
         annotations:
-          summary: "Site lento: {{ $labels.instance }}"
-          description: "O probe HTTP está levando mais de 3 segundos há 5 minutos."
+          summary: "Website is slow: {{ $labels.instance }}"
+          description: "The HTTP probe has been taking more than 3 seconds for the past 5 minutes.."
 
-      - alert: WebsiteCertificateExpiringSoon
+      - alert: WebsiteCertificateExpiringSoon #Check Certificate Expiration
         expr:
           (probe_ssl_earliest_cert_expiry{job="blackbox-http"} - time()) < 15 * 24 * 3600
           and (probe_ssl_earliest_cert_expiry{job="blackbox-http"} - time()) > 0
@@ -28,8 +28,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Certificado SSL expirando: {{ $labels.instance }}"
-          description: "O certificado TLS vence em menos de 15 dias."
+          summary: "SSL certificate expiring: {{ $labels.instance }}"
+          description: "The TLS certificate expires in less than 15 days."
 
       - alert: BlackboxExporterDown
         expr: up{job=~"blackbox-http|blackbox-tcp|blackbox-icmp|blackbox-dns"} == 0
@@ -38,4 +38,4 @@ groups:
           severity: critical
         annotations:
           summary: "Blackbox Exporter indisponível"
-          description: "O Prometheus não consegue coletar métricas do Blackbox Exporter."
+          description: "Prometheus is unable to collect metrics from the Blackbox Exporter."
