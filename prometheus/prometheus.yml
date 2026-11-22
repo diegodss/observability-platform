@@ -54,7 +54,7 @@ scrape_configs:
           }
 
   #########################################################################################
-  #. BLACKBOX CONFIGURATION
+  #. BLACKBOX MONITORING CONFIGURATION
   #########################################################################################
 
   # HTTP/HTTPS: add URLs to targets. TLS certificate expiry is exposed automatically.

@@ -17,7 +17,7 @@ workflow:
     # Dashboard link shown in the ticket "Logs" row. Replace the dashboard path
     # with the one from your dashboard URL (the part starting at /d/).
     grafana_url: "http://grafana.swarm.test"
-    grafana_dashboard_path: "/"
+    grafana_dashboard_path: "/d/edu-integration-overview/01-education-integration-jobs-and-edw-health"
   owners: []
   services: []
   steps: []
