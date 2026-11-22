@@ -97,6 +97,7 @@ scrape_configs:
           - "technology-one-sm:8000"
           - "edw:8000"
           - "keep-backend:8080"
+          - "keep-db:5432"
         #   - app.example.net:443
     relabel_configs:
       - source_labels: [__address__]

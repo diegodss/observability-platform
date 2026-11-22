@@ -8,7 +8,7 @@ groups:
           severity: critical
         annotations:
           summary: "Alvo indisponível: {{ $labels.instance }}"
-          description: "A verificação {{ $labels.job }} falha há pelo menos 1 minuto."
+          description: "A verificação {{ $labels.job }} {{ $labels.instance }} falha há pelo menos 1 minuto."
 
       - alert: WebsiteResponseSlow
         expr: probe_duration_seconds{job="blackbox-http"} > 3
@@ -20,7 +20,8 @@ groups:
           description: "O probe HTTP está levando mais de 3 segundos há 5 minutos."
 
       - alert: WebsiteCertificateExpiringSoon
-        expr: (probe_ssl_earliest_cert_expiry{job="blackbox-http"} - time()) < 15 * 24 * 3600
+        expr:
+          (probe_ssl_earliest_cert_expiry{job="blackbox-http"} - time()) < 15 * 24 * 3600
           and (probe_ssl_earliest_cert_expiry{job="blackbox-http"} - time()) > 0
           and probe_success{job="blackbox-http"} == 1
         for: 10m
