@@ -7,7 +7,7 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "Alvo indisponível: {{ $labels.instance }}"
+          summary: "Target unavailable: {{ $labels.instance }}"
           description: "The check {{ $labels.job }} {{ $labels.instance }} has been failing for at least 1 minute."
 
       - alert: WebsiteResponseSlow #Webpage Slow
