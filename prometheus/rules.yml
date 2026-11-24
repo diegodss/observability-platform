@@ -1,33 +1,99 @@
-# The suggested rules from docs/metrics.md. Prometheus evaluates them and shows
-# them at http://localhost:9090/alerts; no Alertmanager is configured yet, so nothing is sent.
+# Corrected rules. Changes compared to the original:
+#  1. AppUnhealthy (DB): no longer resolves just because the system stopped
+#     publishing app_up (see the comment on the rule).
+#  2. All rules have the `service` and `layer` labels (app | db | worker |
+#     integration), so Keep can route by label instead of by text.
+#  3. Summaries (annotations.summary) kept IDENTICAL to the originals, because
+#     the Keep workflow identifies EDW/Technology One and APP/DB by these texts.
 groups:
   - name: education-integration-poc
     rules:
+      # ---------------------------------------------------------------------
+      # APP LAYER: Prometheus cannot scrape metrics from the system
+      # ---------------------------------------------------------------------
       - alert: TargetSystemUnavailable
         expr: up{job="edw"} == 0
         for: 20s
-        labels: {severity: critical, service: edw}
+        labels:
+          severity: critical
+          service: edw
+          layer: app
+          source: grafana
         annotations:
           summary: "{{ $labels.display_name }} cannot be scraped"
+
       - alert: SourceSystemUnavailable
         expr: up{job="technology-one-sm"} == 0
         for: 20s
-        labels: {severity: critical, service: technology-one-sm}
+        labels:
+          severity: critical
+          service: technology-one-sm
+          layer: app
+          source: grafana
         annotations:
           summary: "{{ $labels.display_name }} cannot be scraped"
+
+      # ---------------------------------------------------------------------
+      # DB LAYER: the system reports that its database is unreachable
+      #
+      # app_up is published by the system itself. If the system goes down, the
+      # series STOPS EXISTING (it does not go to 0), and the original rule
+      # resolved the DB alert for lack of data, even with the database still
+      # down.
+      #
+      # last_over_time keeps the last known value for up to 1h: if the
+      # database was down when the system went down, the alert stays active.
+      # If the database was fine, the last value is 1 and nothing fires. Adjust
+      # the [1h] window to the time the team needs to handle the incident.
+      #
+      # Limitation: with the system down, the database state is UNKNOWN. If
+      # the system goes down with a healthy database, there is no DB alert
+      # (correct). To measure the database independently of the system, you
+      # need a probe or exporter directly on the database.
+      # ---------------------------------------------------------------------
       - alert: AppUnhealthy
-        expr: app_up{app=~"technology-one-sm|edw"} == 0
+        expr: last_over_time(app_up{app=~"technology-one-sm|edw"}[1h]) == 0
         for: 20s
-        labels: {severity: warning}
+        labels:
+          severity: warning
+          service: "{{ $labels.app }}"
+          layer: db
+          source: grafana
         annotations:
           summary: "{{ $labels.app }} is running but its database is unreachable"
+
+      # ---------------------------------------------------------------------
+      # INTEGRATION LAYER (no matching rule in the Keep workflow today)
+      # ---------------------------------------------------------------------
       - alert: IntegrationLastRunFailed
         expr: integration_last_run_success == 0 and on(integration) integration_runs_total{outcome="failure"} > 0
-        labels: {severity: critical, dependency: edw}
+        labels:
+          severity: critical
+          dependency: edw
+          layer: integration
+          source: grafana
         annotations:
           summary: "{{ $labels.display_name }}: latest run failed (target {{ $labels.target }})"
+
       - alert: IntegrationStale
         expr: time() - integration_last_success_timestamp_seconds > 90
-        labels: {severity: warning}
+        labels:
+          severity: warning
+          layer: integration
+          source: grafana
         annotations:
           summary: "{{ $labels.display_name }}: no successful run for over 90s"
+
+      # ---------------------------------------------------------------------
+      # WORKER LAYER (blue band): any appevents worker that is down
+      # ---------------------------------------------------------------------
+      - alert: IntegrationWorkerUnavailable
+        expr: up{job=~"appevents-curriculum|appevents-general|appevents-student"} == 0
+        for: 10s
+        labels:
+          severity: critical
+          dependency: edw
+          layer: worker
+          source: grafana
+        annotations:
+          summary: "{{ $labels.display_name }} worker process has stopped"

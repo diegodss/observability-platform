@@ -1,0 +1,240 @@
+# Docker Swarm stack: observability-platform
+#
+# Pré-requisitos (uma vez só, em um manager):
+#   docker network create -d overlay --attachable observability-sim   # compartilhada com o simulator
+#   docker network create -d overlay --attachable traefik-public      # usada pelo Traefik (stack separado)
+#   docker node update --label-add obs=true <NOME_DO_NODE>            # node onde ficam os bind mounts/volumes
+#   export JIRA_API_TOKEN=...                                         # antes do deploy
+#
+# Deploy:
+#   cd docker-swarm && docker stack deploy -c observability-stack.yml observability
+#   (caminhos relativos como ../prometheus são resolvidos a partir da pasta deste arquivo)
+#
+# Acesso por hostname (via Traefik, ver traefik-stack.yml):
+#   keep.swarm.test          -> frontend do Keep
+#   keep-api.swarm.test      -> backend do Keep
+#   grafana.swarm.test       -> Grafana
+#   prometheus.swarm.test    -> Prometheus
+#   alertmanager.swarm.test  -> Alertmanager
+# Esses serviços NÃO publicam portas no host: o acesso é só pelo Traefik.
+# O DNS (dnsmasq) precisa resolver *.swarm.test para o node onde o Traefik roda.
+#
+# Observações:
+# - "name:", depends_on, restart e extra_hosts: host-gateway não existem no Swarm.
+# - Bind mounts (../prometheus, ../keep/...) só existem no node onde estão os arquivos,
+#   por isso todos os serviços com bind mount/volume local ficam fixos no node com label obs=true.
+# - As labels do Traefik ficam em deploy.labels (labels no nível do serviço não funcionam no Swarm).
+# - Nomes de router são prefixados com "obs-" para não colidir com outros stacks no mesmo Traefik.
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=2d
+    volumes:
+      - ../prometheus:/etc/prometheus:ro
+      - prometheus-data:/prometheus
+    networks:
+      - observability-sim
+      - traefik-public
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.labels.obs == true
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.obs-prometheus.rule=Host(`prometheus.swarm.test`)
+        - traefik.http.routers.obs-prometheus.entrypoints=web
+        - traefik.http.services.obs-prometheus.loadbalancer.server.port=9090
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yaml
+    volumes:
+      - ../alertmanager:/etc/alertmanager:ro
+      - alertmanager-data:/alertmanager
+    networks:
+      - observability-sim
+      - traefik-public
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.labels.obs == true
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.obs-alertmanager.rule=Host(`alertmanager.swarm.test`)
+        - traefik.http.routers.obs-alertmanager.entrypoints=web
+        - traefik.http.services.obs-alertmanager.loadbalancer.server.port=9093
+
+  grafana:
+    image: grafana/grafana:11.3.1
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/integration-overview.json
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+      GF_SERVER_ROOT_URL: http://grafana.swarm.test
+    volumes:
+      - ../grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    networks:
+      - observability-sim
+      - traefik-public
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.labels.obs == true
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.obs-grafana.rule=Host(`grafana.swarm.test`)
+        - traefik.http.routers.obs-grafana.entrypoints=web
+        - traefik.http.services.obs-grafana.loadbalancer.server.port=3000
+
+  # KeepHQ
+  keep-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: keep
+      POSTGRES_PASSWORD: keep
+      POSTGRES_DB: keep
+    volumes:
+      - keep-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keep"]
+      interval: 5s
+      retries: 10
+    networks:
+      - observability-sim
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.labels.obs == true
+
+  keep-backend:
+    image: us-central1-docker.pkg.dev/keephq/keep/keep-api:0.54.3
+    environment:
+      - DATABASE_CONNECTION_STRING=postgresql://keep:keep@keep-db:5432/keep
+      - SECRET_MANAGER_TYPE=FILE
+      - SECRET_MANAGER_DIRECTORY=/secret
+      - KEEP_WORKFLOWS_DIRECTORY=/app/workflows
+      - KEEP_PROVIDERS_DIRECTORY=/app/providers
+      - AUTH_TYPE=NO_AUTH
+      - KEEP_JWT_SECRET=keep-dev-secret-change-me
+      - KEEP_STORE_DBTYPE=postgres
+      - KEEP_API_URL=http://keep-backend:8080
+      - KEEP_EXTERNAL_URL=http://keep.swarm.test
+      # Jira
+      - JIRA_API_TOKEN=${JIRA_API_TOKEN}
+      - JIRA_EMAIL=${JIRA_EMAIL:-anotaaideivid@gmail.com}
+      - JIRA_HOST=${JIRA_HOST:-https://anotaaideivid.atlassian.net}
+    volumes:
+      - ../keep/keep-secrets:/secret
+      - ../keep/workflows:/app/workflows
+      - ../keep/providers:/app/providers
+      - ../keep/secrets-config:/app/secrets-config:ro
+      - ../keep/scripts:/app/scripts:ro
+    networks:
+      - observability-sim
+      - traefik-public
+    deploy:
+      replicas: 1
+      # sem depends_on no Swarm: se o db ainda não estiver pronto, o backend reinicia até conectar
+      restart_policy:
+        condition: any
+        delay: 5s
+      placement:
+        constraints:
+          - node.labels.obs == true
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.obs-keep-api.rule=Host(`keep-api.swarm.test`)
+        - traefik.http.routers.obs-keep-api.entrypoints=web
+        - traefik.http.services.obs-keep-api.loadbalancer.server.port=8080
+
+  keep-frontend:
+    image: us-central1-docker.pkg.dev/keephq/keep/keep-ui:0.54.3
+    environment:
+      - AUTH_TYPE=NO_AUTH
+      - NEXTAUTH_SECRET=keep-dev-secret-change-me
+      - NEXTAUTH_URL=http://keep.swarm.test
+      # API_URL é usada pelo servidor do frontend (rede interna);
+      # as NEXT_PUBLIC_* são usadas pelo navegador (hostname público).
+      - API_URL=http://keep-backend:8080
+      - NEXT_PUBLIC_KEEP_API_URL=http://keep-api.swarm.test
+      - NEXT_PUBLIC_API_URL=http://keep-api.swarm.test
+      - KEEP_JWT_SECRET=keep-dev-secret-change-me
+      - SECRET_MANAGER_TYPE=FILE
+      # O Next.js escuta no endereço do HOSTNAME (por padrão, o ID do container, que
+      # resolve para o IP de UMA só rede). Com o serviço em duas redes, o Traefik
+      # (rede traefik-public) levava "connection refused" e o Keep respondia 503.
+      - HOSTNAME=0.0.0.0
+    networks:
+      - observability-sim
+      - traefik-public
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.obs-keep.rule=Host(`keep.swarm.test`)
+        - traefik.http.routers.obs-keep.entrypoints=web
+        - traefik.http.services.obs-keep.loadbalancer.server.port=3000
+
+  keep-secrets-provisioner:
+    image: us-central1-docker.pkg.dev/keephq/keep/keep-api:0.54.3
+    entrypoint: ["python"]
+    command: ["/app/scripts/provision_secrets_loop.py"]
+    environment:
+      - DATABASE_CONNECTION_STRING=postgresql://keep:keep@keep-db:5432/keep
+      - SECRET_MANAGER_DIRECTORY=/secret
+    volumes:
+      - ../keep/keep-secrets:/secret
+      - ../keep/workflows:/app/workflows:ro
+      - ../keep/secrets-config:/app/secrets-config:ro
+      - ../keep/scripts:/app/scripts:ro
+    networks:
+      - observability-sim
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+      placement:
+        constraints:
+          - node.labels.obs == true
+
+# observability-sim: overlay compartilhada com o stack do simulator (criada manualmente, ver topo).
+# traefik-public: overlay compartilhada com o Traefik (stack separado, ver traefik-stack.yml).
+networks:
+  observability-sim:
+    external: true
+  traefik-public:
+    external: true
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  keep-db:
+  alertmanager-data:
+    name: observability-alertmanager-data

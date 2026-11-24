@@ -1,4 +1,7 @@
+._.DS_Store
+.DS_Store
 .env
 .venv/
 __pycache__/
 *.pyc
+keep/keep-secrets/
